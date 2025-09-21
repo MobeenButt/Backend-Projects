@@ -1,0 +1,20 @@
+{
+  "name": "project",
+  "version": "1.0.0",
+  "description": "A Backend Working",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev":"nodemon src/index.js"
+  },
+  "keywords": [
+    "javascript",
+    "backend",
+    "chai"
+  ],
+  "author": "Mobeen Butt",
+  "license": "ISC",
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}
