@@ -29,7 +29,8 @@ const userSchema = new Schema(
     // url
     avatar: {
       type: String, //cloudinary url
-      required: true,
+      // required: true
+      required: false,
     },
     coverImage: {
       typr: String,
@@ -54,12 +55,13 @@ const userSchema = new Schema(
   }
 );
 
-userSchema.pre("save", async function (req, res, next) {
+// userSchema.pre("save", async function (req, res, next) {
+userSchema.pre("save", async function (req, res) {
   if (!this.isModified("password")) {
-    return next();
+    // return next();
   }
   this.password =  await bcrypt.hash(this.password, 10);
-  next();
+  // next();
 });
 
 
