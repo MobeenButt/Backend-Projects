@@ -1,11 +1,11 @@
-import moongose from "mongoose";
+import mongoose from "mongoose";
 
-const playlistSchema = new moongose.Schema({
+const playlistSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
-  videos: { type: moongose.Schema.Types.ObjectId, ref: "Video" },
-  owner: { type: moongose.Schema.Types.ObjectId, ref: "User" },
+  videos: [{ type: mongoose.Schema.Types.ObjectId, ref: "Video" }],
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
 });
-export const Playlist = moongose.model("Playlist", playlistSchema);
+export const Playlist = mongoose.model("Playlist", playlistSchema);

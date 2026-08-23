@@ -18,12 +18,12 @@ const userSchema = new Schema(
       required: true,
       unique: true,
       lowercase: true,
-      trinm: true,
+      trim: true,
     },
     fullName: {
       type: String,
       required: true,
-      trinm: true,
+      trim: true,
       index: true,
     },
     // url
@@ -33,7 +33,7 @@ const userSchema = new Schema(
       required: false,
     },
     coverImage: {
-      typr: String,
+      type: String,
     },
     watchHistory: [
       {
@@ -58,10 +58,11 @@ const userSchema = new Schema(
 // userSchema.pre("save", async function (req, res, next) {
 userSchema.pre("save", async function (req, res) {
   if (!this.isModified("password")) {
-    // return next();
-  }
+    return next();
+  
   this.password =  await bcrypt.hash(this.password, 10);
-  // next();
+  next();
+  }
 });
 
 
@@ -82,10 +83,10 @@ userSchema.methods.generateAccessToken=function(){
 userSchema.methods.generateRefreshToken=function(){
    return jwt.sign(
     {
-      _id:this._id,
-      email:this.email,
-      username:this.username,
-      fullName:this.fullName
+      _id:this._id
+      // email:this.email,
+      // username:this.username,
+      // fullName:this.fullName
     },
     process.env.REFRESH_TOKEN_SECRET,
     {

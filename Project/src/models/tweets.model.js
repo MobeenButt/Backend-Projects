@@ -1,8 +1,8 @@
-import moongoose from 'mongoose';
+import mongoose from 'mongoose';
 
-const tweetSchema = new moongoose.Schema(
+const tweetSchema = new mongoose.Schema(
     {
-        owner:{type:moongoose.Schema.Types.ObjectId,
+        owner:{type:mongoose.Schema.Types.ObjectId,
             ref:"User"
         },
         content:{type:String, required:true},
@@ -10,4 +10,4 @@ const tweetSchema = new moongoose.Schema(
         updatedAt:{type: Date, default: Date.now},
     })
 
-export const Tweet = moongoose.model("Tweet", tweetSchema);
+export const Tweet = mongoose.model("Tweet", tweetSchema);

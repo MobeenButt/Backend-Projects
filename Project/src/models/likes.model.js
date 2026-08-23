@@ -1,22 +1,22 @@
-import moongose from "mongoose";
+import mongoose from "mongoose";
 
-const likeSchema = new moongose.Schema(
+const likeSchema = new mongoose.Schema(
     {
-        comment:{type:moongose.Schema.Types.ObjectId,
+        comment:{type:mongoose.Schema.Types.ObjectId,
             ref:"Comment"
         },
         createdAt: { type: Date, default: Date.now },
-        video:{type:moongose.Schema.Types.ObjectId,
+        video:{type:mongoose.Schema.Types.ObjectId,
             ref:"Video"
         },
         updatedAt:{type: Date, default: Date.now},
-        likedBy:{type:moongose.Schema.Types.ObjectId,
+        likedBy:{type:mongoose.Schema.Types.ObjectId,
             ref:"User"
         },
-        tweet:{type:moongose.Schema.Types.ObjectId,
+        tweet:{type:mongoose.Schema.Types.ObjectId,
             ref:"Tweet"
         }
     }
 )
 
-export const Like = moongose.model("Like", likeSchema);
+export const Like = mongoose.model("Like", likeSchema);

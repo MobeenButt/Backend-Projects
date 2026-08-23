@@ -1,14 +1,14 @@
-import moongose from "mongoose";
+import mongoose from "mongoose";
 
-const commentSchema = new moongose.Schema(
+const commentSchema = new mongoose.Schema(
     {
         content:{type:String, required:true},
         createdAt: { type: Date, default: Date.now },
         updatedAt:{type: Date, default: Date.now},
-        video:{type:moongose.Schema.Types.ObjectId,
+        video:{type:mongoose.Schema.Types.ObjectId,
             ref:"Video"
         },
-        owner:{type:moongose.Schema.Types.ObjectId,
+        owner:{type:mongoose.Schema.Types.ObjectId,
             ref:"User"
         }
 
