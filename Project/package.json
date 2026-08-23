@@ -1,10 +1,11 @@
 {
-  "name": "project",
+  "name": "backend",
   "version": "1.0.0",
   "description": "A Backend Working",
   "type": "module",
   "main": "index.js",
   "scripts": {
+    "start":"node src/index.js",
     "dev": "nodemon src/index.js"
   },
   "keywords": [
