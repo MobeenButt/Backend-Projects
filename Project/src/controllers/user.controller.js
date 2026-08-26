@@ -25,21 +25,24 @@ const registerUser = asyncHandler(async (req, res) => {
   // check for user creation
   // return response
 
+
+// Step 1. DATA lo request body se
+
   // get user details from frontend
   const { fullName, email, username, password } = req.body;
-  console.log("fullName: ", fullName); 
-  console.log("email: ", email); 
-  console.log("password: ", password); 
-  console.log("username: ", username); 
+  // console.log("fullName: ", fullName); 
+  // console.log("email: ", email); 
+  // console.log("password: ", password); 
+  // console.log("username: ", username); 
 
-  // validation
+  // Step 2. Validation
   if (
     [fullName, email, username, password].some((field) => field?.trim() === "")
   ) {
     throw new ApiError(400, "All fields are required");
   }
 
-  // check if user already exists
+  // Step 3. check if user already exists
   const existingUser =await User.findOne({
     $or: [{ username }, { email }],
   });
@@ -61,17 +64,43 @@ const registerUser = asyncHandler(async (req, res) => {
   // if(!avatar){
   //   throw new ApiError(500,"Error while uploading avatar image")
   // }
+
+// Step 4. Avatar local path check (Multer ne save kia)
+const avatarLocalPath = req.files?.avatar[0]?.path;
+if (!avatarLocalPath) {
+  throw new ApiError(400, "Avatar is required");
+}
+
+// Step 5. Upload avatar to Cloudinary
+const avatar = await uploadOnCloudinary(avatarLocalPath);
+if (!avatar) {
+  throw new ApiError(500, "Error while uploading avatar image");
+}
+
+// Cover image is optional, so we check if it exists before uploading
+const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
+const coverImage = coverImageLocalPath ? await uploadOnCloudinary(coverImageLocalPath) : null;
+if (coverImageLocalPath && !coverImage) {
+  throw new ApiError(500, "Error while uploading cover image");
+}
+
+// Step 6. Create user object and save to database
+
+
   // create user object
  const user= await User.create(
     {
       fullName,
-      // avatar:avatar.url,
-      // coverImage: coverImage?.url  || "",
+      avatar:avatar.url,
+      coverImage: coverImage?.url  || "",
       email,
       username:username.toLowerCase(),
       password,      
     }
   );
+
+// Step 7. Remove password and refresh token field from response
+
 // remove password and refresh token field from response
 const createdUser = await User.findById(user._id).select(
   "-password -refreshToken"
@@ -79,6 +108,8 @@ const createdUser = await User.findById(user._id).select(
   if (!createdUser) {
     throw new ApiError(500, "User registration failed");
   }
+
+// Step 8. Return response
 
   // return response
   return res.status(200).json(
