@@ -2,7 +2,7 @@ import mongoose, { Schema } from "mongoose";
 
 // JWT (JSON Web Token)
 import jwt from "jsonwebtoken";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 const userSchema = new Schema(
   {
     username: {
@@ -55,14 +55,14 @@ const userSchema = new Schema(
   }
 );
 
-// userSchema.pre("save", async function (req, res, next) {
-userSchema.pre("save", async function (req, res) {
+// Password hashing middleware
+userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) {
     return next();
-  
-  this.password =  await bcrypt.hash(this.password, 10);
-  next();
   }
+  
+  this.password = await bcrypt.hash(this.password, 10);
+  next();
 });
 
 

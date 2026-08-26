@@ -21,6 +21,7 @@ app.use(cookieParser())
 // routes
 
 import userRouter from "./routes/user.routes.js"
+import { errorHandler } from "./middlewares/errorHandler.middleware.js";
 
 
 // routes declaration
@@ -29,4 +30,8 @@ app.use("/api/v1/users",userRouter)
 
 
 // https://localhost:8000/api/v1/users/register  --> POST
+
+// Error handling middleware (sabse last mein hona chahiye)
+app.use(errorHandler);
+
 export { app };
