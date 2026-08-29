@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "node10",
+    "baseUrl": ".",
+    "ignoreDeprecations": "5.0",
+    "checkJs": true
+  },
+  "exclude": ["node_modules"]
+}
