@@ -39,3 +39,34 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Invalid or expired access token");
   }
 });
+
+// Optional JWT verification - doesn't throw error if token is missing
+export const verifyJWTOptional = asyncHandler(async (req, res, next) => {
+  try {
+    const accessToken =
+      req.cookies?.accessToken ||
+      req.header("Authorization")?.replace("Bearer ", "");
+
+    if (!accessToken) {
+      // No token, but continue anyway (user will be null)
+      req.user = null;
+      return next();
+    }
+
+    const decodedToken = jwt.verify(
+      accessToken,
+      process.env.ACCESS_TOKEN_SECRET
+    );
+
+    const user = await User.findById(decodedToken?._id).select(
+      "-password -refreshToken"
+    );
+
+    req.user = user || null;
+    next();
+  } catch (error) {
+    // Token is invalid, but we still continue (user will be null)
+    req.user = null;
+    next();
+  }
+});
