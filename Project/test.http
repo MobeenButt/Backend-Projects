@@ -1,0 +1,297 @@
+### VARIABLES
+@baseURL = http://localhost:8000/api/v1
+@token = your-access-token-here
+@videoId = your-video-id
+@userId = your-user-id
+@commentId = your-comment-id
+@playlistId = your-playlist-id
+@tweetId = your-tweet-id
+
+#############################################
+# USER AUTHENTICATION
+#############################################
+
+### 1. Register User
+POST {{baseURL}}/users/register
+Content-Type: application/json
+
+{
+  "fullName": "John Doe",
+  "email": "john@example.com",
+  "username": "johndoe",
+  "password": "password123"
+}
+
+### 2. Login User
+POST {{baseURL}}/users/login
+Content-Type: application/json
+
+{
+  "username": "johndoe",
+  "password": "password123"
+}
+
+### 3. Get Current User
+GET {{baseURL}}/users/current
+Authorization: Bearer {{token}}
+
+### 4. Logout User
+POST {{baseURL}}/users/logout
+Authorization: Bearer {{token}}
+
+### 5. Refresh Access Token
+POST {{baseURL}}/users/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "your-refresh-token"
+}
+
+### 6. Change Password
+POST {{baseURL}}/users/change-password
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "currentPassword": "password123",
+  "newPassword": "newpassword123"
+}
+
+### 7. Update Account Details
+PATCH {{baseURL}}/users/update-account
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "fullName": "John Smith",
+  "email": "johnsmith@example.com"
+}
+
+#############################################
+# VIDEO MANAGEMENT
+#############################################
+
+### 8. Get All Videos
+GET {{baseURL}}/videos?page=1&limit=10
+
+### 9. Get All Videos with Search
+GET {{baseURL}}/videos?query=javascript&sortBy=views&sortType=desc
+
+### 10. Get All Videos by User
+GET {{baseURL}}/videos?userId={{userId}}
+
+### 11. Get Single Video
+GET {{baseURL}}/videos/{{videoId}}
+
+### 12. Upload Video
+# Use Postman/Thunder Client for file upload
+# POST {{baseURL}}/videos
+# Authorization: Bearer {{token}}
+# Form Data:
+# - title: "My First Video"
+# - description: "This is a test video"
+# - videoFile: <select video file>
+# - thumbnail: <select image file>
+
+### 13. Update Video
+PATCH {{baseURL}}/videos/{{videoId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Updated Video Title",
+  "description": "Updated description"
+}
+
+### 14. Toggle Publish Status
+PATCH {{baseURL}}/videos/{{videoId}}/toggle-publish
+Authorization: Bearer {{token}}
+
+### 15. Delete Video
+DELETE {{baseURL}}/videos/{{videoId}}
+Authorization: Bearer {{token}}
+
+### 16. Increment Video Views
+POST {{baseURL}}/videos/{{videoId}}/views
+
+#############################################
+# LIKES
+#############################################
+
+### 17. Like/Unlike Video
+POST {{baseURL}}/likes/toggle/v/{{videoId}}
+Authorization: Bearer {{token}}
+
+### 18. Like/Unlike Comment
+POST {{baseURL}}/likes/toggle/c/{{commentId}}
+Authorization: Bearer {{token}}
+
+### 19. Like/Unlike Tweet
+POST {{baseURL}}/likes/toggle/t/{{tweetId}}
+Authorization: Bearer {{token}}
+
+### 20. Get Liked Videos
+GET {{baseURL}}/likes/videos
+Authorization: Bearer {{token}}
+
+#############################################
+# COMMENTS
+#############################################
+
+### 21. Add Comment to Video
+POST {{baseURL}}/comments/{{videoId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "content": "Great video! Really helpful."
+}
+
+### 22. Get Video Comments
+GET {{baseURL}}/comments/{{videoId}}?page=1&limit=10
+
+### 23. Update Comment
+PATCH {{baseURL}}/comments/c/{{commentId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "content": "Updated comment text"
+}
+
+### 24. Delete Comment
+DELETE {{baseURL}}/comments/c/{{commentId}}
+Authorization: Bearer {{token}}
+
+#############################################
+# SUBSCRIPTIONS
+#############################################
+
+### 25. Subscribe/Unsubscribe to Channel
+POST {{baseURL}}/subscriptions/c/{{userId}}
+Authorization: Bearer {{token}}
+
+### 26. Get Channel Subscribers
+GET {{baseURL}}/subscriptions/c/{{userId}}
+
+### 27. Get Subscribed Channels
+GET {{baseURL}}/subscriptions/u/{{userId}}
+
+#############################################
+# PLAYLISTS
+#############################################
+
+### 28. Create Playlist
+POST {{baseURL}}/playlists
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "JavaScript Tutorials",
+  "description": "Collection of JavaScript learning videos"
+}
+
+### 29. Get User Playlists
+GET {{baseURL}}/playlists/user/{{userId}}
+
+### 30. Get Playlist by ID
+GET {{baseURL}}/playlists/{{playlistId}}
+
+### 31. Add Video to Playlist
+PATCH {{baseURL}}/playlists/add/{{playlistId}}/{{videoId}}
+Authorization: Bearer {{token}}
+
+### 32. Remove Video from Playlist
+PATCH {{baseURL}}/playlists/remove/{{playlistId}}/{{videoId}}
+Authorization: Bearer {{token}}
+
+### 33. Update Playlist
+PATCH {{baseURL}}/playlists/{{playlistId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Updated Playlist Name",
+  "description": "Updated description"
+}
+
+### 34. Delete Playlist
+DELETE {{baseURL}}/playlists/{{playlistId}}
+Authorization: Bearer {{token}}
+
+#############################################
+# TWEETS (Community Posts)
+#############################################
+
+### 35. Create Tweet
+POST {{baseURL}}/tweets
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "content": "Just uploaded a new video about React hooks! Check it out!"
+}
+
+### 36. Get All Tweets
+GET {{baseURL}}/tweets?page=1&limit=20
+
+### 37. Get User Tweets
+GET {{baseURL}}/tweets/user/{{userId}}?page=1&limit=10
+
+### 38. Update Tweet
+PATCH {{baseURL}}/tweets/{{tweetId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "content": "Updated tweet content"
+}
+
+### 39. Delete Tweet
+DELETE {{baseURL}}/tweets/{{tweetId}}
+Authorization: Bearer {{token}}
+
+#############################################
+# DASHBOARD & ANALYTICS
+#############################################
+
+### 40. Get Channel Statistics
+GET {{baseURL}}/dashboard/stats
+Authorization: Bearer {{token}}
+
+### 41. Get Channel Videos
+GET {{baseURL}}/dashboard/videos?page=1&limit=10
+Authorization: Bearer {{token}}
+
+### 42. Get Subscriber Analytics (Monthly)
+GET {{baseURL}}/dashboard/subscribers/analytics?period=month
+Authorization: Bearer {{token}}
+
+### 43. Get Subscriber Analytics (Daily)
+GET {{baseURL}}/dashboard/subscribers/analytics?period=day
+Authorization: Bearer {{token}}
+
+### 44. Get Video Analytics
+GET {{baseURL}}/dashboard/videos/analytics
+Authorization: Bearer {{token}}
+
+### 45. Get Watch History
+GET {{baseURL}}/dashboard/history
+Authorization: Bearer {{token}}
+
+### 46. Clear Watch History
+DELETE {{baseURL}}/dashboard/history
+Authorization: Bearer {{token}}
+
+#############################################
+# ADVANCED QUERIES
+#############################################
+
+### 47. Search Videos by Title
+GET {{baseURL}}/videos?query=javascript tutorial&page=1&limit=5
+
+### 48. Get Most Viewed Videos
+GET {{baseURL}}/videos?sortBy=views&sortType=desc&limit=10
+
+### 49. Get Recent Videos
+GET {{baseURL}}/videos?sortBy=createdAt&sortType=desc&limit=10
