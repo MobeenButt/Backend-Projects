@@ -1,134 +1,181 @@
-# 🎥 Video Platform Backend
+# 🎥 VidTube - Complete Video Platform
 
-A complete, production-ready YouTube-like video platform backend built with Node.js, Express, MongoDB, and Cloudinary.
-
-## 🌟 Features
-
-### Phase 1-2: Foundation ✅
-- User authentication (Register, Login, Logout)
-- JWT token management (Access & Refresh tokens)
-- Profile management (Avatar, Cover Image)
-- Password management
-
-### Phase 3: Video Management ✅
-- Video upload with Cloudinary integration
-- Video CRUD operations
-- Video search and filtering
-- Pagination and sorting
-- Views tracking
-- Publish/Unpublish videos
-
-### Phase 4: Engagement ✅
-- Like/Unlike system (Videos, Comments, Tweets)
-- Comments system (Add, Update, Delete)
-- Subscribe/Unsubscribe to channels
-- Get subscribers and subscriptions lists
-
-### Phase 5: Advanced Features ✅
-- Playlist management (Create, Update, Delete)
-- Add/Remove videos from playlists
-- Watch history tracking
-- Community posts (Tweets)
-- Advanced search with filters
-
-### Phase 6: Analytics & Dashboard ✅
-- Channel statistics (views, subscribers, likes)
-- Subscriber growth analytics
-- Video performance metrics
-- Engagement rate calculations
-- Watch history management
-
-## 🛠️ Tech Stack
-
-- **Runtime:** Node.js
-- **Framework:** Express.js
-- **Database:** MongoDB with Mongoose
-- **Authentication:** JWT (jsonwebtoken)
-- **File Upload:** Multer + Cloudinary
-- **Password Hashing:** bcryptjs
-- **Environment:** dotenv
-- **Dev Tools:** Nodemon, Prettier
+A full-stack YouTube-like video platform with stunning UI and powerful features.
 
 ## 📁 Project Structure
 
 ```
-├── src/
-│   ├── controllers/        # Request handlers
-│   │   ├── user.controller.js
-│   │   ├── video.controller.js
-│   │   ├── like.controller.js
-│   │   ├── comment.controller.js
-│   │   ├── subscription.controller.js
-│   │   ├── playlist.controller.js
-│   │   ├── tweet.controller.js
-│   │   └── dashboard.controller.js
-│   ├── models/            # Database models
-│   │   ├── user.model.js
-│   │   ├── video.model.js
-│   │   ├── likes.model.js
-│   │   ├── comments.model.js
-│   │   ├── subscription.model.js
-│   │   ├── playlists.model.js
-│   │   └── tweets.model.js
-│   ├── routes/            # API routes
-│   │   ├── user.routes.js
-│   │   ├── video.routes.js
-│   │   ├── like.routes.js
-│   │   ├── comment.routes.js
-│   │   ├── subscription.routes.js
-│   │   ├── playlist.routes.js
-│   │   ├── tweet.routes.js
-│   │   └── dashboard.routes.js
-│   ├── middlewares/       # Custom middlewares
-│   │   ├── auth.middleware.js
-│   │   ├── multer.middleware.js
-│   │   └── errorHandler.middleware.js
-│   ├── utils/            # Utility functions
-│   │   ├── asyncHandler.js
-│   │   ├── ApiError.js
-│   │   ├── ApiResponse.js
-│   │   └── cloudinary.js
-│   ├── db/               # Database connection
-│   ├── app.js           # Express app setup
-│   └── index.js         # Entry point
-├── public/temp/         # Temporary file storage
-├── .env                 # Environment variables
-├── API_DOCUMENTATION.md # Complete API docs
-├── QUICK_REFERENCE.md   # Quick reference guide
-├── test.http           # API testing file
-└── package.json
-
+Project/
+├── backend/           # Node.js + Express + MongoDB
+│   ├── src/
+│   │   ├── controllers/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── middlewares/
+│   │   └── utils/
+│   ├── public/
+│   ├── package.json
+│   └── README.md
+│
+└── frontend/          # React + Vite + Tailwind
+    ├── src/
+    │   ├── components/
+    │   ├── pages/
+    │   ├── services/
+    │   ├── store/
+    │   └── utils/
+    ├── package.json
+    └── README.md
 ```
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js (v14 or higher)
+- Node.js v14+ (v18+ recommended)
 - MongoDB (local or Atlas)
 - Cloudinary account
 
-### Installation
+### Backend Setup
 
-1. Clone the repository
 ```bash
-git clone <repository-url>
-cd Project
-```
+cd backend
 
-2. Install dependencies
-```bash
+# Install dependencies
 npm install
+
+# Create .env file
+cp .env.sample .env
+
+# Edit .env with your credentials:
+# - MongoDB URI
+# - Cloudinary credentials
+# - JWT secrets
+
+# Start server
+npm run dev
 ```
 
-3. Create `.env` file
+Backend runs on http://localhost:8000
+
+### Frontend Setup
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+Frontend runs on http://localhost:3000
+
+## ✨ Features
+
+### Backend (44+ API Endpoints)
+- ✅ User authentication (JWT)
+- ✅ Video upload & management
+- ✅ Like/unlike system
+- ✅ Comments CRUD
+- ✅ Subscribe/unsubscribe
+- ✅ Playlists
+- ✅ Watch history
+- ✅ Community posts (tweets)
+- ✅ Channel analytics
+- ✅ Subscriber analytics
+
+### Frontend (Beautiful Dark Theme)
+- ✅ Stunning dark UI (#0A0A0F)
+- ✅ Glassmorphism effects
+- ✅ Neon glow animations
+- ✅ Responsive design
+- ✅ Video player
+- ✅ Search functionality
+- ✅ User authentication
+- ✅ Comments section
+- ✅ Like & subscribe
+
+## 🎨 Design Highlights
+
+### Color Scheme
+- **Background**: #0A0A0F (Deep dark)
+- **Cards**: #13131A (Elevated dark)
+- **Accent**: #6366F1 (Vibrant purple-blue)
+- **Neon Effects**: Cyan, Purple, Pink, Green
+
+### UI Components
+- Glass-morphic cards
+- Gradient buttons
+- Smooth animations
+- Floating effects
+- Neon shadows
+- Responsive grid
+
+## 🛠️ Tech Stack
+
+### Backend
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: MongoDB + Mongoose
+- **Authentication**: JWT + bcrypt
+- **File Upload**: Multer + Cloudinary
+- **Validation**: Custom validators
+
+### Frontend
+- **Framework**: React 18
+- **Build Tool**: Vite
+- **Styling**: Tailwind CSS
+- **State**: Zustand
+- **Routing**: React Router
+- **Animations**: Framer Motion
+- **Notifications**: React Hot Toast
+- **Icons**: React Icons
+
+## 📖 Documentation
+
+### Backend Documentation
+See `backend/API_DOCUMENTATION.md` for:
+- Complete API reference
+- Request/response examples
+- Core concepts explained
+- Testing guide
+- 49 test cases
+
+### Frontend Documentation
+See `frontend/README.md` for:
+- Component library
+- Styling guide
+- State management
+- Development tips
+
+## 🧪 Testing
+
+### Backend
+```bash
+cd backend
+# Use test.http file with VS Code REST Client
+# Or import into Postman
+```
+
+### Frontend
+```bash
+cd frontend
+npm run dev
+# Open http://localhost:3000
+```
+
+## 🌐 Environment Variables
+
+### Backend (.env)
 ```env
 PORT=8000
 MONGODB_URI=mongodb://localhost:27017/videoPlatform
-CORS_ORIGIN=*
+CORS_ORIGIN=http://localhost:3000
 
-ACCESS_TOKEN_SECRET=your-secret-key-here
+ACCESS_TOKEN_SECRET=your-secret-here
 ACCESS_TOKEN_EXPIRY=1d
-REFRESH_TOKEN_SECRET=your-refresh-secret-key
+REFRESH_TOKEN_SECRET=your-refresh-secret
 REFRESH_TOKEN_EXPIRY=10d
 
 CLOUDINARY_CLOUD_NAME=your-cloud-name
@@ -136,193 +183,84 @@ CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 ```
 
-4. Start the server
-```bash
-# Development mode
-npm run dev
+### Frontend
+Automatically proxies API calls to backend via Vite config.
 
-# Production mode
-npm start
-```
+## 🚀 Deployment
 
-Server will run on `http://localhost:8000`
+### Backend
+- Deploy to Heroku, Railway, or Render
+- Set environment variables
+- Connect MongoDB Atlas
+- Configure Cloudinary
 
-## 📡 API Endpoints
+### Frontend
+- Build: `npm run build`
+- Deploy `dist/` folder to:
+  - Vercel (recommended)
+  - Netlify
+  - GitHub Pages
 
-### Base URL: `/api/v1`
+## 📊 Project Stats
 
-### Authentication
-- `POST /users/register` - Register new user
-- `POST /users/login` - Login user
-- `POST /users/logout` - Logout user
-- `POST /users/refresh-token` - Refresh access token
+- **Total Files**: 50+
+- **Backend Endpoints**: 44+
+- **Frontend Components**: 15+
+- **Lines of Code**: ~10,000+
+- **Documentation Pages**: 7
 
-### Videos
-- `POST /videos` - Upload video
-- `GET /videos` - Get all videos (with filters)
-- `GET /videos/:videoId` - Get single video
-- `PATCH /videos/:videoId` - Update video
-- `DELETE /videos/:videoId` - Delete video
-- `POST /videos/:videoId/views` - Increment views
+## 🎯 Completed Features
 
-### Likes
-- `POST /likes/toggle/v/:videoId` - Like/unlike video
-- `POST /likes/toggle/c/:commentId` - Like/unlike comment
-- `POST /likes/toggle/t/:tweetId` - Like/unlike tweet
-- `GET /likes/videos` - Get liked videos
+### Phase 1-2: Foundation ✅
+- User authentication
+- Profile management
 
-### Comments
-- `POST /comments/:videoId` - Add comment
-- `GET /comments/:videoId` - Get video comments
-- `PATCH /comments/c/:commentId` - Update comment
-- `DELETE /comments/c/:commentId` - Delete comment
+### Phase 3: Videos ✅
+- Upload, update, delete
+- Views counter
+- Search & filters
 
-### Subscriptions
-- `POST /subscriptions/c/:channelId` - Subscribe/unsubscribe
-- `GET /subscriptions/c/:channelId` - Get subscribers
-- `GET /subscriptions/u/:subscriberId` - Get subscriptions
+### Phase 4: Engagement ✅
+- Likes
+- Comments
+- Subscriptions
 
-### Playlists
-- `POST /playlists` - Create playlist
-- `GET /playlists/user/:userId` - Get user playlists
-- `GET /playlists/:playlistId` - Get playlist
-- `PATCH /playlists/:playlistId` - Update playlist
-- `DELETE /playlists/:playlistId` - Delete playlist
-- `PATCH /playlists/add/:playlistId/:videoId` - Add video
-- `PATCH /playlists/remove/:playlistId/:videoId` - Remove video
-
-### Tweets (Community Posts)
-- `POST /tweets` - Create tweet
-- `GET /tweets` - Get all tweets
-- `GET /tweets/user/:userId` - Get user tweets
-- `PATCH /tweets/:tweetId` - Update tweet
-- `DELETE /tweets/:tweetId` - Delete tweet
-
-### Dashboard
-- `GET /dashboard/stats` - Channel statistics
-- `GET /dashboard/videos` - Channel videos
-- `GET /dashboard/subscribers/analytics` - Subscriber analytics
-- `GET /dashboard/videos/analytics` - Video analytics
-- `GET /dashboard/history` - Watch history
-- `DELETE /dashboard/history` - Clear watch history
-
-## 📖 Documentation
-
-- **[API_DOCUMENTATION.md](./API_DOCUMENTATION.md)** - Complete API documentation with examples and core concepts
-- **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - Quick reference guide with common operations
-- **[test.http](./test.http)** - API testing file for VS Code REST Client
-
-## 🧪 Testing
-
-1. Install REST Client extension in VS Code
-2. Open `test.http`
-3. Update variables at the top
-4. Click "Send Request" above each endpoint
-
-Or use Postman/Thunder Client/Insomnia with the documented endpoints.
-
-## 🔑 Key Concepts
-
-### asyncHandler
-Wraps async functions to automatically catch errors.
-
-### ApiResponse
-Standardized response format for all endpoints.
-
-### ApiError
-Custom error class for consistent error handling.
-
-### JWT Authentication
-- Access tokens (short-lived)
-- Refresh tokens (long-lived)
-- Cookie-based storage
-
-### File Upload Flow
-Multer → Temporary Storage → Cloudinary → URL → Database
-
-### MongoDB Aggregation
-Complex queries with joins, filtering, sorting, and pagination.
-
-## 🔒 Security Features
-
-- JWT-based authentication
-- Password hashing with bcrypt
-- HTTP-only cookies
-- CORS configuration
-- Input validation
-- Owner-based authorization
-- Cloudinary secure uploads
-
-## 📊 Database Models
-
-### User
-- Authentication & profile
+### Phase 5: Advanced ✅
+- Playlists
 - Watch history
-- Relationships with all content
-
-### Video
-- Video metadata
-- Owner reference
-- Views tracking
-- Publish status
-
-### Like (Polymorphic)
-- Videos, Comments, Tweets
-- User reference
-- Timestamps
-
-### Comment
-- Video reference
-- Owner reference
-- Content
-
-### Subscription
-- Subscriber-Channel relationship
-- Unique constraint
-
-### Playlist
-- Video collection
-- Owner reference
-- Video array
-
-### Tweet
 - Community posts
-- Owner reference
-- Content
 
-## 🎯 Features Implemented
+### Phase 6: Analytics ✅
+- Channel stats
+- Subscriber analytics
+- Video performance
 
-✅ User registration & authentication  
-✅ Video upload, update, delete  
-✅ Video search & filtering  
-✅ Like/unlike system  
-✅ Comments CRUD  
-✅ Subscribe/unsubscribe  
-✅ Playlists management  
-✅ Watch history  
-✅ Community posts (tweets)  
-✅ Channel analytics  
-✅ Subscriber analytics  
-✅ Video performance metrics  
+### Frontend ✅
+- Beautiful dark theme
+- Responsive design
+- All core pages
+- Smooth animations
 
-## 🚧 Future Enhancements
+## 🔮 Future Enhancements
 
-- [ ] Video recommendations algorithm
+- [ ] Video upload page
+- [ ] Dashboard page
+- [ ] Channel page
+- [ ] Playlists page
+- [ ] Settings page
+- [ ] Video recommendations
 - [ ] Real-time notifications
-- [ ] Live streaming support
+- [ ] Live streaming
 - [ ] Video transcoding
-- [ ] Advanced search with Elasticsearch
-- [ ] Rate limiting
-- [ ] Caching with Redis
-- [ ] Email verification
-- [ ] Social media integration
-- [ ] Video quality options
-- [ ] Closed captions
-- [ ] Monetization features
+- [ ] Advanced search
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. Fork the repository
+2. Create feature branch
+3. Commit changes
+4. Push to branch
+5. Open pull request
 
 ## 📝 License
 
@@ -334,4 +272,32 @@ ISC
 
 ---
 
-**Note:** This is an educational project demonstrating backend development with Node.js, Express, and MongoDB. For production use, additional security measures and optimizations should be implemented. 
+## 🎓 Key Learning Outcomes
+
+### Backend Development
+- RESTful API design
+- MongoDB aggregation
+- JWT authentication
+- File upload handling
+- Error handling patterns
+
+### Frontend Development
+- React best practices
+- State management
+- Responsive design
+- Animation techniques
+- Component architecture
+
+### Full-Stack Integration
+- API integration
+- Authentication flow
+- File upload flow
+- Real-time updates
+
+---
+
+**🌟 Star this project if you found it helpful!**
+
+**Built with ❤️ and lots of ☕**
+
+**Version**: 1.0.0
