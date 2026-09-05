@@ -6,6 +6,7 @@ const Input = ({
   onChange,
   error,
   icon: Icon,
+  hint,
   required = false,
   disabled = false,
   className = '',
@@ -20,7 +21,7 @@ const Input = ({
       )}
       <div className="relative">
         {Icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-youtube-text-secondary">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-youtube-text-secondary pointer-events-none">
             <Icon className="w-5 h-5" />
           </div>
         )}
@@ -33,14 +34,15 @@ const Input = ({
           className={`
             input-field
             ${Icon ? 'pl-11' : ''}
-            ${error ? 'border-youtube-red focus:border-youtube-red' : ''}
+            ${error ? 'border-youtube-red focus:border-youtube-red focus:ring-youtube-red/20' : ''}
             ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
           `}
           {...props}
         />
       </div>
-      {error && (
-        <p className="mt-1 text-xs text-youtube-red">{error}</p>
+      {error && <p className="mt-1 text-xs text-youtube-red">{error}</p>}
+      {hint && !error && (
+        <p className="mt-1 text-xs text-youtube-text-secondary">{hint}</p>
       )}
     </div>
   );

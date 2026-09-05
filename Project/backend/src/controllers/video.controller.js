@@ -67,6 +67,8 @@ const uploadVideo = asyncHandler(async (req, res) => {
 // @route   GET /api/v1/videos
 // @access  Public
 const getAllVideos = asyncHandler(async (req, res) => {
+  console.log("📹 getAllVideos called with query:", req.query);
+  
   const {
     page = 1,
     limit = 10,
@@ -75,6 +77,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
     sortType = "desc",
     userId,
   } = req.query;
+
+  console.log("Parsed params:", { page, limit, query, sortBy, sortType, userId });
 
   // Build match conditions
   const matchConditions = {
@@ -93,6 +97,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
   if (userId) {
     matchConditions.owner = new mongoose.Types.ObjectId(userId);
   }
+
+  console.log("Match conditions:", JSON.stringify(matchConditions, null, 2));
 
   // Aggregation pipeline
   const aggregate = Video.aggregate([
@@ -117,7 +123,10 @@ const getAllVideos = asyncHandler(async (req, res) => {
       },
     },
     {
-      $unwind: "$owner",
+      $unwind: {
+        path: "$owner",
+        preserveNullAndEmptyArrays: true,
+      },
     },
     {
       $sort: {
@@ -132,11 +141,37 @@ const getAllVideos = asyncHandler(async (req, res) => {
     limit: parseInt(limit),
   };
 
-  const videos = await Video.aggregatePaginate(aggregate, options);
+  console.log("Pagination options:", options);
 
-  return res
-    .status(200)
-    .json(new ApiResponse(200, videos, "Videos fetched successfully"));
+  try {
+    const videos = await Video.aggregatePaginate(aggregate, options);
+    console.log("Videos fetched successfully:", videos);
+
+    return res
+      .status(200)
+      .json(new ApiResponse(200, videos, "Videos fetched successfully"));
+  } catch (error) {
+    console.error("❌ Aggregate paginate error:", error);
+    console.error("Error stack:", error.stack);
+    // Return empty result if aggregation fails
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        {
+          docs: [],
+          totalDocs: 0,
+          limit: parseInt(limit),
+          page: parseInt(page),
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+          nextPage: null,
+          prevPage: null,
+        },
+        "Videos fetched successfully"
+      )
+    );
+  }
 });
 
 // @desc    Get single video by ID

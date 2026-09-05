@@ -12,6 +12,9 @@ const userSchema = new Schema(
       lowercase: true,
       trim: true,
       index: true,
+      minlength: [3, "Username must be at least 3 characters"],
+      maxlength: [30, "Username must be at most 30 characters"],
+      match: [/^[a-zA-Z0-9_]+$/, "Username can only contain letters, numbers and underscores"],
     },
     email: {
       type: String,
@@ -19,6 +22,7 @@ const userSchema = new Schema(
       unique: true,
       lowercase: true,
       trim: true,
+      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
     },
     fullName: {
       type: String,
@@ -44,6 +48,8 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: [true, "Password is required"],
+      minlength: [8, "Password must be at least 8 characters"],
+      maxlength: [72, "Password must be at most 72 characters"],
     },
     refreshToken: {
       type: String,

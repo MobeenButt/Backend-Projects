@@ -5,16 +5,22 @@ const Loader = ({ size = 'md', fullScreen = false, text = '' }) => {
     lg: 'w-14 h-14 border-4',
   };
 
+  const spinner = (
+    <div
+      className={`${sizes[size]} border-youtube-border border-t-youtube-red rounded-full animate-spin`}
+    />
+  );
+
   const loader = (
     <div className="flex flex-col items-center justify-center gap-3">
-      <div className={`${sizes[size]} border-youtube-text-secondary border-t-transparent rounded-full animate-spin`} />
+      {spinner}
       {text && <p className="text-youtube-text-secondary text-sm">{text}</p>}
     </div>
   );
 
   if (fullScreen) {
     return (
-      <div className="fixed inset-0 bg-youtube-bg/95 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-youtube-bg/95 flex items-center justify-center z-50 animate-fade-in">
         {loader}
       </div>
     );

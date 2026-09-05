@@ -1,27 +1,29 @@
-const Button = ({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
+const Button = ({
+  children,
+  variant = 'primary',
+  size = 'md',
   fullWidth = false,
   loading = false,
   disabled = false,
+  icon: Icon,
   onClick,
   type = 'button',
   className = '',
-  ...props 
+  ...props
 }) => {
-  const baseClasses = 'font-medium rounded-sm transition-colors duration-200 inline-flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed';
-  
   const variants = {
-    primary: 'bg-youtube-red hover:bg-youtube-red-hover text-white',
-    secondary: 'bg-youtube-surface hover:bg-youtube-hover text-youtube-text border border-youtube-border',
-    text: 'text-blue-500 hover:bg-blue-500/10',
-    outlined: 'border border-youtube-border text-blue-500 hover:bg-blue-500/10',
+    primary: 'btn btn-primary',
+    secondary: 'btn btn-secondary',
+    ghost: 'btn btn-ghost',
+    outlined: 'btn btn-outlined',
+    text: 'btn bg-transparent hover:bg-youtube-hover text-blue-400 text-sm',
+    danger: 'btn bg-transparent hover:bg-youtube-red/20 text-youtube-red text-sm',
   };
-  
+
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
+    xs: 'px-2.5 py-1 text-xs',
+    sm: 'px-3.5 py-1.5 text-sm',
+    md: 'px-5 py-2 text-sm',
     lg: 'px-6 py-2.5 text-base',
   };
 
@@ -31,7 +33,6 @@ const Button = ({
       onClick={onClick}
       disabled={disabled || loading}
       className={`
-        ${baseClasses}
         ${variants[variant]}
         ${sizes[size]}
         ${fullWidth ? 'w-full' : ''}
@@ -41,11 +42,14 @@ const Button = ({
     >
       {loading ? (
         <>
-          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
           Loading...
         </>
       ) : (
-        children
+        <>
+          {Icon && <Icon className="w-5 h-5 flex-shrink-0" />}
+          {children}
+        </>
       )}
     </button>
   );

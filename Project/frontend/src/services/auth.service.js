@@ -1,22 +1,28 @@
-import api from '../utils/api';
+import api, { buildFormData } from './api';
+
+// The backend returns ApiResponse { statusCode, data, message, success }
+// After the interceptor, `response` is that ApiResponse object, so the
+// actual payload lives at `response.data`.
+
+const persistSession = (user) => {
+  if (user) {
+    localStorage.setItem('user', JSON.stringify(user));
+  }
+};
 
 export const authService = {
   register: async (userData) => {
-    const response = await api.post('/users/register', userData);
-    if (response.data) {
-      localStorage.setItem('user', JSON.stringify(response.data));
-    }
+    // Build multipart payload (includes avatar file + refreshToken array as JSON)
+    const formData =
+      userData instanceof FormData ? userData : buildFormData(userData);
+    const response = await api.post('/users/register', formData);
+    persistSession(response.data);
     return response;
   },
 
   login: async (credentials) => {
     const response = await api.post('/users/login', credentials);
-    if (response.data) {
-      localStorage.setItem('user', JSON.stringify(response.data));
-      if (response.data.accessToken) {
-        localStorage.setItem('accessToken', response.data.accessToken);
-      }
-    }
+    persistSession(response.data);
     return response;
   },
 
@@ -30,18 +36,14 @@ export const authService = {
   },
 
   getCurrentUser: async () => {
-    const response = await api.get('/users/current');
-    if (response.data) {
-      localStorage.setItem('user', JSON.stringify(response.data));
-    }
+    const response = await api.get('/users/current-user');
+    persistSession(response.data);
     return response;
   },
 
   updateProfile: async (data) => {
     const response = await api.patch('/users/update-account', data);
-    if (response.data) {
-      localStorage.setItem('user', JSON.stringify(response.data));
-    }
+    persistSession(response.data);
     return response;
   },
 
@@ -49,3 +51,5 @@ export const authService = {
     return await api.post('/users/change-password', data);
   },
 };
+
+export default authService;

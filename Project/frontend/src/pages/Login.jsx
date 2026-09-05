@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '../store/useAuthStore';
 import Input from '../components/common/Input';
 import Button from '../components/common/Button';
@@ -10,14 +10,14 @@ const Login = () => {
     username: '',
     password: '',
   });
+  const [showPassword, setShowPassword] = useState(false);
   const { login, loading } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/';
 
   const handleChange = (e) => {
-    setCredentials({
-      ...credentials,
-      [e.target.name]: e.target.value,
-    });
+    setCredentials({ ...credentials, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
@@ -25,17 +25,21 @@ const Login = () => {
     try {
       await login(credentials);
       toast.success('Welcome back!');
-      navigate('/');
+      navigate(from, { replace: true });
     } catch (error) {
-      toast.error(error.message || 'Login failed');
+      const message = error.response?.data?.message || 'Login failed';
+      toast.error(message);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 bg-youtube-bg">
-      <div className="w-full max-w-md">
-        <div className="bg-youtube-surface border border-youtube-border rounded-sm p-8">
-          {/* Logo */}
+    <div className="min-h-screen flex items-center justify-center px-4 bg-youtube-bg relative overflow-hidden">
+      {/* Subtle background glow */}
+      <div className="absolute -top-40 -left-40 w-96 h-96 bg-youtube-red/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+      <div className="w-full max-w-md relative animate-slide-up">
+        <div className="bg-youtube-surface border border-youtube-border rounded-xl p-8 shadow-2xl">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-6">
               <svg className="w-10 h-10 text-youtube-red" fill="currentColor" viewBox="0 0 24 24">
@@ -47,7 +51,6 @@ const Login = () => {
             <p className="text-sm text-youtube-text-secondary">to continue to VidTube</p>
           </div>
 
-          {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Email or username"
@@ -55,34 +58,41 @@ const Login = () => {
               type="text"
               value={credentials.username}
               onChange={handleChange}
+              placeholder="you@example.com or your username"
+              autoComplete="username"
               required
             />
 
-            <Input
-              label="Password"
-              name="password"
-              type="password"
-              value={credentials.password}
-              onChange={handleChange}
-              required
-            />
+            <div>
+              <Input
+                label="Password"
+                name="password"
+                type={showPassword ? 'text' : 'password'}
+                value={credentials.password}
+                onChange={handleChange}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="mt-1 text-xs text-blue-400 hover:text-blue-300 transition-colors"
+              >
+                {showPassword ? 'Hide password' : 'Show password'}
+              </button>
+            </div>
 
             <div className="pt-2">
-              <Button
-                type="submit"
-                variant="primary"
-                fullWidth
-                loading={loading}
-              >
+              <Button type="submit" variant="primary" fullWidth loading={loading}>
                 Sign in
               </Button>
             </div>
           </form>
 
-          {/* Sign Up Link */}
           <div className="mt-6 text-center">
             <span className="text-sm text-youtube-text-secondary">Don't have an account? </span>
-            <Link to="/register" className="text-sm text-blue-500 hover:underline">
+            <Link to="/register" className="text-sm text-blue-400 hover:underline font-medium">
               Sign up
             </Link>
           </div>

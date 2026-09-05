@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import VideoCard from '../components/video/VideoCard';
-import Loader from '../components/common/Loader';
+import { channelService } from '../services/channel.service';
+import Button from '../components/common/Button';
+import { PageHeader, VideoGrid } from '../components/common/VideoPage';
 import toast from 'react-hot-toast';
 
 const History = () => {
@@ -12,51 +13,53 @@ const History = () => {
   }, []);
 
   const loadHistory = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      // TODO: Implement API call to get watch history
-      // const data = await videoService.getWatchHistory();
-      // setVideos(data);
-      
-      // Temporary: Show empty state
-      setVideos([]);
+      const response = await channelService.getWatchHistory();
+      setVideos(response.data || []);
     } catch (error) {
-      toast.error('Failed to load history');
+      console.error('Failed to load history:', error);
+      setVideos([]);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader size="lg" />
-      </div>
-    );
-  }
-
-  if (videos.length === 0) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <svg className="w-24 h-24 mx-auto mb-4 text-youtube-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h2 className="text-xl font-medium text-youtube-text mb-2">No watch history</h2>
-          <p className="text-youtube-text-secondary">Videos you watch will appear here</p>
-        </div>
-      </div>
-    );
-  }
+  const handleClearHistory = async () => {
+    if (!window.confirm('Clear all watch history?')) return;
+    try {
+      await channelService.clearWatchHistory();
+      setVideos([]);
+      toast.success('Watch history cleared');
+    } catch (error) {
+      toast.error('Failed to clear history');
+    }
+  };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold text-youtube-text mb-6">Watch History</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 3xl:grid-cols-6 gap-4">
-        {videos.map((video) => (
-          <VideoCard key={video._id} video={video} />
-        ))}
-      </div>
+    <div className="p-4 lg:p-6 min-h-screen">
+      <PageHeader
+        title="Watch History"
+        subtitle={`${videos.length} ${videos.length === 1 ? 'video' : 'videos'}`}
+        action={
+          videos.length > 0 && (
+            <Button variant="outlined" size="sm" onClick={handleClearHistory}>
+              Clear history
+            </Button>
+          )
+        }
+      />
+      <VideoGrid
+        videos={videos}
+        loading={loading}
+        emptyIcon={
+          <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        }
+        emptyTitle="No watch history"
+        emptyDescription="Videos you watch will appear here"
+      />
     </div>
   );
 };

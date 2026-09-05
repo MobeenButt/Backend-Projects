@@ -1,6 +1,10 @@
 import { ApiError } from "../utils/ApiError.js";
 
 const errorHandler = (err, req, res, next) => {
+  // Log the error for debugging
+  console.error("❌ Error:", err.message);
+  console.error("Stack:", err.stack);
+  
   // Default status code and message
   let statusCode = 500;
   let message = "Internal Server Error";

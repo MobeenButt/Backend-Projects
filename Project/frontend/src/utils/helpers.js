@@ -42,8 +42,9 @@ export const formatTimeAgo = (date) => {
 };
 
 export const truncateText = (text, maxLength) => {
-  if (text.length <= maxLength) return text;
-  return text.substr(0, maxLength) + '...';
+  const str = String(text || '');
+  if (str.length <= maxLength) return str;
+  return str.substr(0, maxLength) + '...';
 };
 
 export const getInitials = (name) => {
@@ -61,5 +62,5 @@ export const validateEmail = (email) => {
 };
 
 export const validatePassword = (password) => {
-  return password.length >= 6;
+  return password.length >= 8;
 };

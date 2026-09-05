@@ -1,4 +1,4 @@
-import api from '../utils/api';
+import api from './api';
 
 export const videoService = {
   getAllVideos: async (params = {}) => {
@@ -11,7 +11,7 @@ export const videoService = {
   },
 
   uploadVideo: async (formData) => {
-    return await api.upload('/videos', formData);
+    return await api.post('/videos', formData);
   },
 
   updateVideo: async (videoId, data) => {
@@ -27,11 +27,11 @@ export const videoService = {
   },
 
   incrementViews: async (videoId) => {
-    return await api.post(`/videos/${videoId}/views`);
+    return await api.post(`/videos/${videoId}/views`, {});
   },
 
   likeVideo: async (videoId) => {
-    return await api.post(`/likes/toggle/v/${videoId}`);
+    return await api.post(`/likes/toggle/v/${videoId}`, {});
   },
 
   getComments: async (videoId, params = {}) => {
@@ -52,6 +52,6 @@ export const videoService = {
   },
 
   likeComment: async (commentId) => {
-    return await api.post(`/likes/toggle/c/${commentId}`);
+    return await api.post(`/likes/toggle/c/${commentId}`, {});
   },
 };

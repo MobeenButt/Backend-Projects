@@ -79,7 +79,19 @@ const deleteFromCloudinary = async (fileUrl) => {
 
     configureCloudinary();
 
-    const publicId = fileUrl.split("/").slice(-2).join("/").split(".")[0];
+    // Extract public_id from a Cloudinary URL.
+    // URLs follow the pattern: /<cloud>/image/upload/v<version>/<public_id>.<ext>
+    // We strip query params and find "/upload/" segment.
+    const url = fileUrl.split("?")[0];
+    const match = url.match(/\/upload\/(?:v\d+\/)?(.+)$/);
+    if (!match) {
+      console.log("Cloudinary delete error: could not parse public_id from URL");
+      return null;
+    }
+
+    let publicId = match[1];
+    // Remove file extension
+    publicId = publicId.replace(/\.[^.]+$/, "");
 
     const response = await cloudinary.uploader.destroy(publicId, {
       resource_type: "image",

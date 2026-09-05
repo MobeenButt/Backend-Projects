@@ -8,6 +8,10 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   font-family: 'Roboto', 'Arial', sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -17,6 +21,7 @@ body {
   overflow-x: hidden;
 }
 
+/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -27,28 +32,121 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #717171;
+  background: #3f3f3f;
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #909090;
+  background: #717171;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Selection color */
+::selection {
+  background: rgba(255, 0, 0, 0.3);
+  color: #fff;
+}
+
+@layer base {
+  button {
+    cursor: pointer;
+  }
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
 }
 
 @layer components {
+  .btn {
+    @apply font-medium rounded-full inline-flex items-center justify-center gap-2
+      transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed
+      focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50
+      whitespace-nowrap select-none;
+  }
+
   .btn-primary {
-    @apply bg-youtube-red hover:bg-youtube-red-hover text-white font-medium px-4 py-2 rounded-sm
-           transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-youtube-red hover:bg-youtube-red-hover text-white px-5 py-2 text-sm
+      shadow-[0_0_0_1px_rgba(255,255,255,0.1)] hover:shadow-[0_0_0_1px_rgba(255,255,255,0.1),0_4px_12px_rgba(255,0,0,0.3)]
+      disabled:hover:bg-youtube-red;
   }
-  
+
   .btn-secondary {
-    @apply bg-youtube-surface hover:bg-youtube-hover text-youtube-text font-medium px-4 py-2 rounded-sm
-           border border-youtube-border transition-colors duration-200;
+    @apply bg-youtube-surface hover:bg-youtube-hover text-youtube-text px-4 py-2 text-sm
+      border border-youtube-border;
   }
-  
+
+  .btn-ghost {
+    @apply bg-transparent hover:bg-youtube-hover text-youtube-text px-4 py-2 text-sm;
+  }
+
+  .btn-outlined {
+    @apply bg-transparent hover:bg-youtube-hover text-youtube-text px-4 py-2 text-sm
+      border border-youtube-border;
+  }
+
+  .icon-btn {
+    @apply p-2 rounded-full hover:bg-youtube-hover transition-colors duration-200
+      text-youtube-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50;
+  }
+
   .input-field {
-    @apply w-full bg-transparent border border-youtube-border rounded-sm px-3 py-2
-           text-youtube-text placeholder-youtube-text-secondary focus:outline-none focus:border-blue-500
-           transition-colors duration-200;
+    @apply w-full bg-transparent border border-youtube-border rounded-md px-3 py-2
+      text-youtube-text placeholder-youtube-text-secondary focus:outline-none
+      focus:border-white/40 focus:ring-1 focus:ring-white/20 transition-all duration-200;
+  }
+
+  .card-surface {
+    @apply bg-youtube-surface border border-youtube-border rounded-lg;
+  }
+
+  .chip {
+    @apply px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap
+      transition-all duration-200 select-none;
+  }
+
+  .chip-active {
+    @apply bg-white text-black hover:bg-white/90;
+  }
+
+  .chip-inactive {
+    @apply bg-youtube-surface text-youtube-text hover:bg-youtube-hover;
+  }
+
+  /* Vertical divider */
+  .v-divider {
+    @apply w-px bg-youtube-border;
+  }
+
+  /* Gradient avatar background fallback */
+  .avatar-gradient {
+    background: linear-gradient(135deg, #ff0000, #6d1d1d 50%, #3f3f3f);
+  }
+
+  /* Hide number input arrows */
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+@layer utilities {
+  /* Line clamp helpers handled by Tailwind, but add fallbacks */
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.6);
+  }
+
+  .glass-panel {
+    background: rgba(33, 33, 33, 0.92);
+    backdrop-filter: blur(8px);
   }
 }

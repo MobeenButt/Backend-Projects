@@ -5,6 +5,11 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import {
+  ACCESS_TOKEN_COOKIE_OPTIONS,
+  REFRESH_TOKEN_COOKIE_OPTIONS,
+  CLEAR_COOKIE_OPTIONS,
+} from "../utils/cookieOptions.js";
 import jwt from "jsonwebtoken";
 // const registerUser = asyncHandler(async (req, res) => {
 //   res.status(200).json({
@@ -70,22 +75,22 @@ const registerUser = asyncHandler(async (req, res) => {
   // }
 
   // Step 4. Avatar local path check (Multer ne save kia)
-  // const avatarLocalPath = req.files?.avatar?.[0]?.path;
-  // if (!avatarLocalPath) {
-  //   throw new ApiError(400, "Avatar is required");
-  // }
+  const avatarLocalPath = req.files?.avatar?.[0]?.path;
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar is required");
+  }
 
-  // // Step 5. Upload avatar to Cloudinary
-  // let avatar;
-  // try {
-  //   avatar = await uploadOnCloudinary(avatarLocalPath);
-  // } catch (error) {
-  //   throw new ApiError(500, error.message || "Error while uploading avatar image");
-  // }
+  // Step 5. Upload avatar to Cloudinary
+  let avatar;
+  try {
+    avatar = await uploadOnCloudinary(avatarLocalPath);
+  } catch (error) {
+    throw new ApiError(500, error.message || "Error while uploading avatar image");
+  }
 
-  // if (!avatar?.url) {
-  //   throw new ApiError(500, "Error while uploading avatar image");
-  // }
+  if (!avatar?.url) {
+    throw new ApiError(500, "Error while uploading avatar image");
+  }
 
   // Cover image is optional, so we check if it exists before uploading
   const coverImageLocalPath = req.files?.coverImage?.[0]?.path;
@@ -107,7 +112,7 @@ const registerUser = asyncHandler(async (req, res) => {
   // create user object
   const user = await User.create({
     fullName,
-    // avatar: avatar.url,
+    avatar: avatar.url,
     coverImage: coverImage?.url || "",
     email,
     username: username.toLowerCase(),
@@ -124,11 +129,17 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "User registration failed");
   }
 
-  // Step 8. Return response
+  // Step 8. Generate tokens + set httpOnly cookies (same as login),
+  // so the user is authenticated immediately after registering.
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
 
-  // return response
+  // Step 9. Return response with auth cookies
   return res
     .status(200)
+    .cookie("refreshToken", refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS)
+    .cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS)
     .json(new ApiResponse(200, createdUser, "User registered successfully"));
 });
 
@@ -154,15 +165,22 @@ const generateAccessAndRefreshTokens = async (userId) => {
 const loginUser = asyncHandler(async (req, res) => {
   // Step 1. Get user credentials from request body
   const { email, username, password } = req.body;
+
+  // Normalize: allow login with either email OR username in the same field
+  const identifier = (email || username || "").trim().toLowerCase();
+  console.log("🔐 Login attempt:", { identifier });
+
   // Step 2. Validate credentials
-  if (!email && !username) {
+  if (!identifier) {
     throw new ApiError(400, "Email or username is required");
   }
 
-  // Step 3. Check if user exists
+  // Step 3. Check if user exists (match against both email and username)
   const user = await User.findOne({
-    $or: [{ email }, { username: username?.toLowerCase() }],
+    $or: [{ email: identifier }, { username: identifier }],
   });
+
+  console.log("👤 User found:", user ? `Yes (${user.email})` : "No");
 
   if (!user) {
     throw new ApiError(404, "User not found");
@@ -185,19 +203,11 @@ const loginUser = asyncHandler(async (req, res) => {
     "-password -refreshToken"
   );
 
-  // Step 7. Cookies options
-  const options = {
-    httpOnly: true, //JS se acces nahee hogi - sirf server
-    secure: true, //https
-    // sameSite:"None", //cross site request allowed
-    // maxAge:10*24*60*60*1000 //10 days
-  };
-
-  // Step 8. Response send
+  // Step 7. Response send - set httpOnly cookies for tokens
   return res
     .status(200)
-    .cookie("refreshToken", refreshToken, options)
-    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS)
+    .cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS)
     .json(new ApiResponse(200, loggedInUser, "User logged in successfully"));
 });
 
@@ -210,15 +220,10 @@ const logoutUser = asyncHandler(async (req, res) => {
   );
 
   // Step 2. Clear cookies
-  const options = {
-    httpOnly: true,
-    secure: true,
-  };
-
   return res
     .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
+    .clearCookie("accessToken", CLEAR_COOKIE_OPTIONS)
+    .clearCookie("refreshToken", CLEAR_COOKIE_OPTIONS)
     .json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
@@ -240,23 +245,15 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     if (!user || user.refreshToken !== incomingRefreshToken) {
       throw new ApiError(401, "Invalid refresh token");
     }
-    // Step 4. DB wale refresh token and incoming refresh token match ho gaye, ab new access token generate krna hai
-    if(incomingRefreshToken !== user.refreshToken){
-      throw new ApiError(401, "Invalid refresh token");
-    }
 
-    // Step 5. Generate new access token
+    // Step 4. Generate new access token
     const {accessToken,refreshToken:newRefreshToken} = await generateAccessAndRefreshTokens(user._id);
 
     // Step 6. Send response with new access token and refresh token
-    const options = {
-      httpOnly: true,
-      secure: true,
-    };
     return res
       .status(200)
-      .cookie("refreshToken", newRefreshToken, options)
-      .cookie("accessToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, REFRESH_TOKEN_COOKIE_OPTIONS)
+      .cookie("accessToken", accessToken, ACCESS_TOKEN_COOKIE_OPTIONS)
       .json(new ApiResponse(200, {accessToken,refreshToken:newRefreshToken}, "Access token refreshed successfully"));
 
   } catch (error) {
@@ -359,6 +356,42 @@ const updateAccountDetails = asyncHandler(async (req, res) => {
 //     .json(new ApiResponse(200, updatedUser, "Avatar updated successfully"));
 // });
 
+const updateUserAvatar = asyncHandler(async (req, res) => {
+  const avatarLocalPath = req.file?.path;
+
+  if (!avatarLocalPath) {
+    throw new ApiError(400, "Avatar file is required");
+  }
+
+  let avatar;
+  try {
+    avatar = await uploadOnCloudinary(avatarLocalPath);
+  } catch (error) {
+    throw new ApiError(500, error.message || "Error while uploading avatar");
+  }
+
+  if (!avatar?.url) {
+    throw new ApiError(500, "Error while uploading avatar");
+  }
+
+  const user = await User.findById(req.user._id);
+
+  if (user?.avatar) {
+    await deleteFromCloudinary(user.avatar);
+  }
+
+  user.avatar = avatar.url;
+  await user.save({ validateBeforeSave: false });
+
+  const updatedUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, updatedUser, "Avatar updated successfully"));
+});
+
 const updateCoverImage = asyncHandler(async (req, res) => {
   const coverImageLocalPath = req.file?.path;
 
@@ -405,6 +438,6 @@ export {
   getCurrentUser,
   changeCurrentUserPassword,
   updateAccountDetails,
-  // updateUserAvatar,
+  updateUserAvatar,
   updateCoverImage,
 };

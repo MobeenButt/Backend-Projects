@@ -28,6 +28,7 @@ const Watch = () => {
       loadRelatedVideos();
       incrementView();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoId]);
 
   const loadVideo = async () => {
@@ -45,8 +46,8 @@ const Watch = () => {
 
   const loadRelatedVideos = async () => {
     try {
-      const response = await videoService.getAllVideos({ limit: 12 });
-      setRelatedVideos(response.data.docs || []);
+      const response = await videoService.getAllVideos({ limit: 12, sortBy: 'views', sortType: 'desc' });
+      setRelatedVideos(response.data?.docs || []);
     } catch (error) {
       console.error('Failed to load related videos:', error);
     }
@@ -56,7 +57,7 @@ const Watch = () => {
     try {
       await videoService.incrementViews(videoId);
     } catch (error) {
-      console.error('Failed to increment views:', error);
+      // Non-critical, ignore
     }
   };
 
@@ -67,8 +68,13 @@ const Watch = () => {
     }
     try {
       await videoService.likeVideo(videoId);
-      setIsLiked(!isLiked);
-      toast.success(isLiked ? 'Removed from liked videos' : 'Added to liked videos');
+      const newLikedState = !isLiked;
+      setIsLiked(newLikedState);
+      setVideo((v) => ({
+        ...v,
+        likesCount: Math.max(0, (v.likesCount || 0) + (newLikedState ? 1 : -1)),
+      }));
+      toast.success(newLikedState ? 'Added to liked videos' : 'Removed from liked videos');
     } catch (error) {
       toast.error('Failed to like video');
     }
@@ -81,8 +87,9 @@ const Watch = () => {
     }
     try {
       await channelService.subscribe(video.owner._id);
-      setIsSubscribed(!isSubscribed);
-      toast.success(isSubscribed ? 'Unsubscribed' : 'Subscribed!');
+      const newSubState = !isSubscribed;
+      setIsSubscribed(newSubState);
+      toast.success(newSubState ? 'Subscribed!' : 'Unsubscribed');
     } catch (error) {
       toast.error('Failed to subscribe');
     }
@@ -99,7 +106,7 @@ const Watch = () => {
   if (!video) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center animate-fade-in">
           <h2 className="text-xl font-medium text-youtube-text mb-2">Video not found</h2>
           <p className="text-sm text-youtube-text-secondary">The video you're looking for doesn't exist</p>
         </div>
@@ -108,35 +115,34 @@ const Watch = () => {
   }
 
   return (
-    <div className="min-h-screen pb-8">
+    <div className="min-h-screen pb-8 animate-fade-in">
       <div className="flex flex-col lg:flex-row gap-6 p-4 lg:p-6 max-w-screen-2xl mx-auto">
         {/* Main Content */}
-        <div className="flex-1 lg:max-w-5xl">
+        <div className="flex-1 lg:max-w-5xl min-w-0">
           {/* Video Player */}
-          <VideoPlayer
-            src={video.videoFile}
-            poster={video.thumbnail}
-          />
+          <VideoPlayer src={video.videoFile} poster={video.thumbnail} />
 
           {/* Video Info */}
           <div className="mt-4">
-            <h1 className="text-lg md:text-xl font-medium text-youtube-text mb-2">{video.title}</h1>
+            <h1 className="text-lg md:text-xl font-medium text-youtube-text mb-3 line-clamp-2">
+              {video.title}
+            </h1>
 
             {/* Channel Info & Actions */}
             <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <Link to={`/channel/${video.owner._id}`}>
+              <div className="flex items-center gap-3 min-w-0">
+                <Link to={`/channel/${video.owner._id}`} className="flex-shrink-0">
                   <Avatar
                     src={video.owner?.avatar}
                     alt={video.owner?.fullName}
                     fallback={video.owner?.fullName}
-                    size="lg"
+                    size="md"
                   />
                 </Link>
-                <div>
-                  <Link 
+                <div className="min-w-0">
+                  <Link
                     to={`/channel/${video.owner._id}`}
-                    className="font-medium text-youtube-text hover:text-youtube-text-secondary block text-sm"
+                    className="font-medium text-youtube-text hover:text-youtube-text-secondary block text-sm truncate"
                   >
                     {video.owner?.fullName}
                   </Link>
@@ -146,11 +152,12 @@ const Watch = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Button
-                  variant={isLiked ? 'secondary' : 'secondary'}
+                  variant={isLiked ? 'primary' : 'secondary'}
                   size="sm"
                   onClick={handleLike}
+                  aria-pressed={isLiked}
                 >
                   <svg className="w-5 h-5" fill={isLiked ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
@@ -169,14 +176,14 @@ const Watch = () => {
             </div>
 
             {/* Description */}
-            <div className="mt-4 bg-youtube-surface rounded-lg p-3">
+            <div className="mt-4 card-surface p-3.5 hover:bg-youtube-hover/40 transition-colors">
               <p className={`text-sm text-youtube-text whitespace-pre-wrap ${!showFullDescription ? 'line-clamp-2' : ''}`}>
-                {video.description}
+                {video.description || 'No description provided.'}
               </p>
-              {video.description.length > 100 && (
+              {video.description?.length > 100 && (
                 <button
                   onClick={() => setShowFullDescription(!showFullDescription)}
-                  className="text-sm text-youtube-text-secondary hover:text-youtube-text mt-2 font-medium"
+                  className="text-sm font-medium text-youtube-text-secondary hover:text-youtube-text mt-2"
                 >
                   {showFullDescription ? 'Show less' : 'Show more'}
                 </button>
@@ -191,13 +198,13 @@ const Watch = () => {
         </div>
 
         {/* Sidebar - Related Videos */}
-        <div className="lg:w-96 xl:w-[400px]">
+        <div className="lg:w-96 xl:w-[400px] flex-shrink-0">
           <div className="space-y-3">
-            {relatedVideos.map((relatedVideo) => (
-              relatedVideo._id !== videoId && (
+            {relatedVideos
+              .filter((rv) => rv._id !== videoId)
+              .map((relatedVideo) => (
                 <VideoCard key={relatedVideo._id} video={relatedVideo} />
-              )
-            ))}
+              ))}
           </div>
         </div>
       </div>
