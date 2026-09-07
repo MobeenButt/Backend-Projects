@@ -35,13 +35,28 @@ const app = express();
 // Parse allowed origins (comma-separated in env for flexibility)
 
 import cors from "cors";
-
-// **👉 EXACT frontend URL – copy-paste from your Vercel dashboard**
-const allowedOrigin = "https://vidtube-frontend-ochre.vercel.app";
+// CORS configuration - allows Vercel frontend AND localhost
+const allowedOrigins = [
+  "https://vidtube-frontend-ochre.vercel.app",
+  "http://localhost:3000",
+  // Add more origins if needed
+];
 
 const corsOptions = {
-  origin: allowedOrigin,            // **Exact match** – no wildcards
-  credentials: true,               // **Critical** for cookies/auth
+  // Use function to check origin against array
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g., curl, server-to-server)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    // reject origin not in list
+    return callback(new Error("Not allowed by CORS"));
+  },
+  
+  credentials: true,              // **Critical** for cookies/auth
   methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
 };
