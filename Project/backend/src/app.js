@@ -34,7 +34,7 @@ const authLimiter = rateLimit({
 const app = express();
 
 // Parse allowed origins (comma-separated in env for flexibility)
-const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000" || "https://vidtube-frontend-ochre.vercel.app")
   .split(",")
   .map((o) => o.trim())
   .filter(Boolean);
