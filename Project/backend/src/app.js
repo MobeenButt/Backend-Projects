@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -34,25 +33,39 @@ const authLimiter = rateLimit({
 const app = express();
 
 // Parse allowed origins (comma-separated in env for flexibility)
-const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000" || "https://vidtube-frontend-ochre.vercel.app")
-  .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean);
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (same-origin, curl, postman, server-to-server)
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      return callback(new Error("Not allowed by CORS"), false);
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+import cors from "cors";
+
+// **👉 EXACT frontend URL – copy-paste from your Vercel dashboard**
+const allowedOrigin = "https://vidtube-frontend-ochre.vercel.app";
+
+const corsOptions = {
+  origin: allowedOrigin,            // **Exact match** – no wildcards
+  credentials: true,               // **Critical** for cookies/auth
+  methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+// const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000" || "https://vidtube-frontend-ochre.vercel.app")
+//   .split(",")
+//   .map((o) => o.trim())
+//   .filter(Boolean);
+
+// app.use(
+//   cors({
+//     origin: (origin, callback) => {
+//       // Allow requests with no origin (same-origin, curl, postman, server-to-server)
+//       if (!origin || allowedOrigins.includes(origin)) {
+//         return callback(null, true);
+//       }
+//       return callback(new Error("Not allowed by CORS"), false);
+//     },
+//     credentials: true,
+//     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+//     allowedHeaders: ["Content-Type", "Authorization"],
+//   })
+// );
 
 // Security headers (helmet) - CSP tailored for serving static files only
 app.use(
