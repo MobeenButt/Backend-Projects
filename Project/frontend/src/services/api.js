@@ -120,4 +120,20 @@ api.interceptors.response.use(
   }
 );
 
+// Helper to build FormData from plain object
+export const buildFormData = (data) => {
+  const formData = new FormData();
+  Object.entries(data).forEach(([key, value]) => {
+    if (value == null) return;
+    if (value instanceof File) {
+      formData.append(key, value);
+    } else if (Array.isArray(value)) {
+      formData.append(key, JSON.stringify(value));
+    } else {
+      formData.append(key, value);
+    }
+  });
+  return formData;
+};
+
 export default api;
