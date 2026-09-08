@@ -40,7 +40,7 @@ const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
   .filter(Boolean);
 
 console.log("✅ Allowed CORS Origins:", allowedOrigins);
-
+app.set("trust proxy", 1); // Trust first proxy (for secure cookies behind proxies/load balancers)
 app.use(
   cors({
     origin: (origin, callback) => {
