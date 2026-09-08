@@ -34,23 +34,39 @@ const authLimiter = rateLimit({
 const app = express();
 
 // CORS Configuration - Production Ready
-const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
-  .split(",")
-  .map((o) => o.trim())
-  .filter(Boolean);
+// Defaults always include the production frontend + localhost, so cookies work
+// even if CORS_ORIGIN env is unset or points to an old URL.
+const allowedOrigins = [
+  "https://vidtube-frontend-ochre.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:5173",
+  ...(process.env.CORS_ORIGIN || "")
+    .split(",")
+    .map((o) => o.trim())
+    .filter(Boolean),
+];
 
-console.log("✅ Allowed CORS Origins:", allowedOrigins);
+// Vercel preview deployments generate new subdomains on every push
+// (e.g. vidtube-frontend-xxxx-username.vercel.app). Allow all *.vercel.app
+// origins so the cookies (and thus tokens) keep working across deploys.
+const vercelPreviewPattern = /^https:\/\/[\w-]+\.vercel\.app$/i;
+
+// Custom CSRF-safe check: set-cookie headers are only allowed when the request
+// origin matches, so credentials reflect the exact origin (never "*").
 app.set("trust proxy", 1); // Trust first proxy (for secure cookies behind proxies/load balancers)
 app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (mobile apps, curl, Postman, server-to-server)
       if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.includes(origin)) {
+
+      if (
+        allowedOrigins.includes(origin) ||
+        vercelPreviewPattern.test(origin)
+      ) {
         return callback(null, true);
       }
-      
+
       console.warn("❌ CORS blocked origin:", origin);
       return callback(new Error("Not allowed by CORS"), false);
     },

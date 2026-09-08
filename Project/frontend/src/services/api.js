@@ -43,6 +43,24 @@ api.interceptors.request.use(
   }
 );
 
+// Convert any http:// URL to https:// (Cloudinary may return http for old records)
+const normalizeToHttps = (value) => {
+  if (typeof value === 'string') {
+    return value.replace(/^http:\/\//i, 'https://');
+  }
+  if (Array.isArray(value)) {
+    return value.map(normalizeToHttps);
+  }
+  if (value && typeof value === 'object') {
+    const out = {};
+    for (const key of Object.keys(value)) {
+      out[key] = normalizeToHttps(value[key]);
+    }
+    return out;
+  }
+  return value;
+};
+
 // Response interceptor: handle token refresh and errors
 api.interceptors.response.use(
   (response) => {
@@ -54,9 +72,10 @@ api.interceptors.response.use(
         data: response.data,
       });
     }
-    
+
     // Backend wraps responses in ApiResponse { statusCode, data, message, success }
-    return response.data;
+    // Force HTTPS on every URL field (thumbnail, avatar, videoFile, coverImage...)
+    return normalizeToHttps(response.data);
   },
   async (error) => {
     const originalRequest = error.config;
