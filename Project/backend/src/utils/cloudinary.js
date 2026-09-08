@@ -40,7 +40,7 @@ const uploadOnCloudinary = async (localFilePath) => {
   console.log("Uploading file:", absolutePath);
 
   try {
-    const uploadOptions = { resource_type: "auto" };
+    const uploadOptions = { resource_type: "auto",secure: true };
 
     if (process.env.CLOUDINARY_UPLOAD_PRESET?.trim()) {
       uploadOptions.upload_preset = process.env.CLOUDINARY_UPLOAD_PRESET.trim();
