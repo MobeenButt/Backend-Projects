@@ -63,7 +63,8 @@ app.use(
 );
 
 // Handle preflight OPTIONS requests explicitly
-app.options("*", cors());
+// Note: Express 5 doesn't support "*" - use regex or remove this line (cors middleware already handles OPTIONS)
+// app.options("*", cors()); // Removed - cors middleware handles this automatically
 
 // Security headers (helmet) - CSP tailored for serving static files only
 app.use(
