@@ -41,9 +41,8 @@ import cors from "cors";
 const allowedOrigin = "https://vidtube-frontend-ochre.vercel.app";
 // Or if you prefer an array:
 const allowedOrigins = [
-  "https://vidtube-frontend-iejxnpg61-mobeen-butts-projects.vercel.app",
-  "http://localhost:3000", // keep localhost for development
-  "https://vidtube-frontend-ochre.vercel.app"
+  "https://vidtube-frontend-ochre.vercel.app",
+  "http://localhost:3000",
 ];
 
 // Then use it with the cors middleware as we discussed before:
