@@ -6,67 +6,88 @@ const API_BASE_URL =
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true,
+  withCredentials: true, // CRITICAL for cross-origin cookies
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// The backend wraps every response in ApiResponse { statusCode, data, message, success }.
-// This helper unwraps the axios response to return the full ApiResponse object,
-// so callers can read .data for the payload and .message for toasts.
-const unwrap = (response) => response.data;
-
-// Builds a multipart FormData payload from a plain object.
-// Array values are appended as JSON strings (e.g. refreshToken array in register).
-export const buildFormData = (data) => {
-  const formData = new FormData();
-  Object.entries(data).forEach(([key, value]) => {
-    if (value == null) return;
-    if (Array.isArray(value)) {
-      formData.append(key, JSON.stringify(value));
-    } else {
-      formData.append(key, value);
-    }
-  });
-  return formData;
-};
+// Log API calls in development
+if (import.meta.env.DEV) {
+  console.log('🔧 API Base URL:', API_BASE_URL);
+}
 
 // Request interceptor
 api.interceptors.request.use(
   (config) => {
+    // Log requests in development
+    if (import.meta.env.DEV) {
+      console.log('🚀 API Request:', {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        data: config.data,
+        params: config.params,
+      });
+    }
+
     // For file uploads, let the browser set the Content-Type with boundary
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
+    
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    console.error('❌ Request Error:', error);
+    return Promise.reject(error);
+  }
 );
 
-// Response interceptor: unwrap + handle token refresh
+// Response interceptor: handle token refresh and errors
 api.interceptors.response.use(
-  (response) => unwrap(response),
+  (response) => {
+    // Log successful responses in development
+    if (import.meta.env.DEV) {
+      console.log('✅ API Response:', {
+        url: response.config.url,
+        status: response.status,
+        data: response.data,
+      });
+    }
+    
+    // Backend wraps responses in ApiResponse { statusCode, data, message, success }
+    return response.data;
+  },
   async (error) => {
     const originalRequest = error.config;
 
-    if (!error.response && !originalRequest._retry) {
-      // Network-level failure (server unreachable) - pass through
-      return Promise.reject(error);
+    // Log errors in development
+    if (import.meta.env.DEV) {
+      console.error('❌ API Error:', {
+        url: originalRequest?.url,
+        status: error.response?.status,
+        message: error.response?.data?.message || error.message,
+        data: error.response?.data,
+      });
     }
 
+    // Handle network errors
+    if (!error.response) {
+      console.error('🌐 Network Error: Unable to reach server');
+      return Promise.reject(new Error('Network error. Please check your connection.'));
+    }
+
+    // Handle 401 Unauthorized - attempt token refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
+      // Don't retry for auth endpoints
       const isAuthEndpoint = ['/users/login', '/users/register', '/users/refresh-token']
         .some((path) => originalRequest.url?.includes(path));
 
-      // Never try to refresh for auth endpoints - reject with the real error
-      // (e.g. "Invalid password") so callers show an accurate message.
       if (isAuthEndpoint) {
         return Promise.reject(error);
       }
 
-      // Only attempt refresh if we believe a session exists.
-      // httpOnly cookies can't be read from JS, so use the mirrored user record.
+      // Check if user session exists
       if (!localStorage.getItem('user')) {
         return Promise.reject(error);
       }
@@ -74,7 +95,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        // Refresh uses a bare axios call (not the instance) to avoid loops
+        // Attempt token refresh
         const refreshResponse = await axios.post(
           `${API_BASE_URL}/users/refresh-token`,
           {},
@@ -82,20 +103,20 @@ api.interceptors.response.use(
         );
 
         if (refreshResponse.data?.data?.accessToken) {
-          originalRequest.headers.Authorization = `Bearer ${refreshResponse.data.data.accessToken}`;
+          // Retry original request
           return api(originalRequest);
         }
       } catch (refreshError) {
-        // Refresh failed - session is gone. Clean up local state and reject
-        // with the ORIGINAL error. Never hard-redirect here: AuthGuard handles
-        // navigation for protected routes (redirecting from the interceptor
-        // caused an infinite reload loop).
+        // Refresh failed - clear local state
         localStorage.removeItem('user');
         localStorage.removeItem('accessToken');
+        console.error('🔒 Session expired. Please login again.');
       }
     }
 
-    return Promise.reject(error);
+    // Return structured error
+    const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
+    return Promise.reject(new Error(errorMessage));
   }
 );
 

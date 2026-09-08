@@ -1,4 +1,5 @@
 import express from "express";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -32,52 +33,37 @@ const authLimiter = rateLimit({
 
 const app = express();
 
-// Parse allowed origins (comma-separated in env for flexibility)
+// CORS Configuration - Production Ready
+const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
 
-import cors from "cors";
-// https://vidtube-frontend-ochre.vercel.app/
+console.log("✅ Allowed CORS Origins:", allowedOrigins);
 
-// ✅ NEW frontend URL (copy-paste exactly from your Vercel dashboard)
-const allowedOrigin = "https://vidtube-frontend-ochre.vercel.app";
-// Or if you prefer an array:
-const allowedOrigins = [
-  "https://vidtube-frontend-ochre.vercel.app",
-  "http://localhost:3000",
-];
-
-// Then use it with the cors middleware as we discussed before:
 app.use(
   cors({
     origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Postman, server-to-server)
       if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error("Not allowed by CORS"));
+      
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      console.warn("❌ CORS blocked origin:", origin);
+      return callback(new Error("Not allowed by CORS"), false);
     },
-    credentials: true,
-    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+    credentials: true, // CRITICAL: Allow cookies cross-origin
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    exposedHeaders: ["Set-Cookie"],
+    maxAge: 86400, // 24 hours - cache preflight requests
   })
 );
 
-// const allowedOrigins = (process.env.CORS_ORIGIN || "http://localhost:3000" || "https://vidtube-frontend-ochre.vercel.app")
-//   .split(",")
-//   .map((o) => o.trim())
-//   .filter(Boolean);
-
-// app.use(
-//   cors({
-//     origin: (origin, callback) => {
-//       // Allow requests with no origin (same-origin, curl, postman, server-to-server)
-//       if (!origin || allowedOrigins.includes(origin)) {
-//         return callback(null, true);
-//       }
-//       return callback(new Error("Not allowed by CORS"), false);
-//     },
-//     credentials: true,
-//     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-//     allowedHeaders: ["Content-Type", "Authorization"],
-//   })
-// );
+// Handle preflight OPTIONS requests explicitly
+app.options("*", cors());
 
 // Security headers (helmet) - CSP tailored for serving static files only
 app.use(

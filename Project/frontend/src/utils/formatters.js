@@ -1,3 +1,10 @@
+// Convert HTTP URLs to HTTPS (critical for production mixed content issues)
+export const toHttps = (url) => {
+  if (!url) return '';
+  if (typeof url !== 'string') return url;
+  return url.replace(/^http:\/\//i, 'https://');
+};
+
 // Format view count (e.g., 1234 -> 1.2K, 1234567 -> 1.2M)
 export const formatViews = (views) => {
   if (!views) return '0 views';
