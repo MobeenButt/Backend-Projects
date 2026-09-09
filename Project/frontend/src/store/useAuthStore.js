@@ -68,6 +68,14 @@ const useAuthStore = create((set) => ({
   // Sets loading=true while in-flight so AuthGuard shows a spinner instead
   // of immediately redirecting to /login.
   loadUser: async () => {
+    // No local record means the user was never logged in on this device.
+    // Skip the server call entirely — no cookie exists to validate.
+    const hasLocal = !!localStorage.getItem('user');
+    if (!hasLocal) {
+      set({ loading: false });
+      return;
+    }
+
     set({ loading: true });
     try {
       const response = await authService.getCurrentUser();
@@ -79,6 +87,7 @@ const useAuthStore = create((set) => ({
       }
       set({ user, isAuthenticated: !!user, loading: false });
     } catch {
+      // Server rejected the cookie (expired / rotated secret / logged out elsewhere)
       localStorage.removeItem('user');
       localStorage.removeItem('accessToken');
       set({ user: null, isAuthenticated: false, loading: false });
