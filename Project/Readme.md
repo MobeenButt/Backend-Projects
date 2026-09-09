@@ -1,303 +1,181 @@
-# 🎥 VidTube - Complete Video Platform
+# VideoVerse
 
-A full-stack YouTube-like video platform with stunning UI and powerful features.
+A full-stack YouTube clone built with the MERN stack. Users can register, upload videos, watch, like, comment, subscribe to channels, manage playlists, and view a creator dashboard with analytics. Deployed to production on Vercel and Railway.
 
-## 📁 Project Structure
+**Live:** https://vidtube-frontend-ochre.vercel.app  
+**Backend:** https://backend-projects-production-e244.up.railway.app/api/v1/health
+
+---
+
+## Tech Stack
+
+**Frontend**
+- React 18 + Vite
+- React Router DOM v6
+- Zustand (state management)
+- Axios (HTTP client with interceptors)
+- Tailwind CSS
+- Framer Motion
+
+**Backend**
+- Node.js + Express.js v5
+- MongoDB + Mongoose
+- JWT (access + refresh tokens)
+- Cloudinary (media storage)
+- Multer (file uploads)
+- bcryptjs, helmet, express-rate-limit
+
+---
+
+## Project Structure
 
 ```
 Project/
-├── backend/           # Node.js + Express + MongoDB
-│   ├── src/
-│   │   ├── controllers/
-│   │   ├── models/
-│   │   ├── routes/
-│   │   ├── middlewares/
-│   │   └── utils/
-│   ├── public/
-│   ├── package.json
-│   └── README.md
+├── frontend/               # React app → deployed on Vercel
+│   └── src/
+│       ├── components/     # Navbar, Sidebar, VideoCard, etc.
+│       ├── pages/          # 14 pages (Home, Watch, Upload, Channel, etc.)
+│       ├── services/       # API service files (one per resource)
+│       ├── store/          # Zustand auth store
+│       └── utils/          # helpers.js, formatters.js
 │
-└── frontend/          # React + Vite + Tailwind
-    ├── src/
-    │   ├── components/
-    │   ├── pages/
-    │   ├── services/
-    │   ├── store/
-    │   └── utils/
-    ├── package.json
-    └── README.md
+├── backend/                # Express API → deployed on Railway
+│   └── src/
+│       ├── controllers/    # 8 controllers
+│       ├── models/         # 7 Mongoose models
+│       ├── routes/         # 8 route files
+│       ├── middlewares/    # auth, multer, error handler, logger
+│       └── utils/          # ApiError, ApiResponse, cloudinary, cookieOptions
+│
+├── vercel.json             # React Router SPA rewrites
+└── README.md
 ```
 
-## 🚀 Quick Start
+---
 
-### Prerequisites
-- Node.js v14+ (v18+ recommended)
-- MongoDB (local or Atlas)
-- Cloudinary account
+## Local Setup
 
-### Backend Setup
+**Prerequisites:** Node.js 18+, MongoDB Atlas account, Cloudinary account
 
+**Backend**
 ```bash
 cd backend
-
-# Install dependencies
 npm install
-
-# Create .env file
-cp .env.sample .env
-
-# Edit .env with your credentials:
-# - MongoDB URI
-# - Cloudinary credentials
-# - JWT secrets
-
-# Start server
+cp .env.example .env
+# Fill in .env with your credentials
 npm run dev
+# Runs on http://localhost:8000
 ```
 
-Backend runs on http://localhost:8000
-
-### Frontend Setup
-
+**Frontend**
 ```bash
 cd frontend
-
-# Install dependencies
 npm install
-
-# Start development server
+# Create frontend/.env
+echo "VITE_API_URL=http://localhost:8000/api/v1" > .env
 npm run dev
+# Runs on http://localhost:5173
 ```
 
-Frontend runs on http://localhost:3000
+---
 
-## ✨ Features
+## Environment Variables
 
-### Backend (44+ API Endpoints)
-- ✅ User authentication (JWT)
-- ✅ Video upload & management
-- ✅ Like/unlike system
-- ✅ Comments CRUD
-- ✅ Subscribe/unsubscribe
-- ✅ Playlists
-- ✅ Watch history
-- ✅ Community posts (tweets)
-- ✅ Channel analytics
-- ✅ Subscriber analytics
-
-### Frontend (Beautiful Dark Theme)
-- ✅ Stunning dark UI (#0A0A0F)
-- ✅ Glassmorphism effects
-- ✅ Neon glow animations
-- ✅ Responsive design
-- ✅ Video player
-- ✅ Search functionality
-- ✅ User authentication
-- ✅ Comments section
-- ✅ Like & subscribe
-
-## 🎨 Design Highlights
-
-### Color Scheme
-- **Background**: #0A0A0F (Deep dark)
-- **Cards**: #13131A (Elevated dark)
-- **Accent**: #6366F1 (Vibrant purple-blue)
-- **Neon Effects**: Cyan, Purple, Pink, Green
-
-### UI Components
-- Glass-morphic cards
-- Gradient buttons
-- Smooth animations
-- Floating effects
-- Neon shadows
-- Responsive grid
-
-## 🛠️ Tech Stack
-
-### Backend
-- **Runtime**: Node.js
-- **Framework**: Express.js
-- **Database**: MongoDB + Mongoose
-- **Authentication**: JWT + bcrypt
-- **File Upload**: Multer + Cloudinary
-- **Validation**: Custom validators
-
-### Frontend
-- **Framework**: React 18
-- **Build Tool**: Vite
-- **Styling**: Tailwind CSS
-- **State**: Zustand
-- **Routing**: React Router
-- **Animations**: Framer Motion
-- **Notifications**: React Hot Toast
-- **Icons**: React Icons
-
-## 📖 Documentation
-
-### Backend Documentation
-See `backend/API_DOCUMENTATION.md` for:
-- Complete API reference
-- Request/response examples
-- Core concepts explained
-- Testing guide
-- 49 test cases
-
-### Frontend Documentation
-See `frontend/README.md` for:
-- Component library
-- Styling guide
-- State management
-- Development tips
-
-## 🧪 Testing
-
-### Backend
-```bash
-cd backend
-# Use test.http file with VS Code REST Client
-# Or import into Postman
+**Backend** (`backend/.env`)
 ```
-
-### Frontend
-```bash
-cd frontend
-npm run dev
-# Open http://localhost:3000
-```
-
-## 🌐 Environment Variables
-
-### Backend (.env)
-```env
 PORT=8000
-MONGODB_URI=mongodb://localhost:27017/videoPlatform
-CORS_ORIGIN=http://localhost:3000
-
-ACCESS_TOKEN_SECRET=your-secret-here
+NODE_ENV=development
+MONGODB_URI=mongodb+srv://...
+CORS_ORIGIN=http://localhost:5173
+ACCESS_TOKEN_SECRET=<64-char random string>
 ACCESS_TOKEN_EXPIRY=1d
-REFRESH_TOKEN_SECRET=your-refresh-secret
+REFRESH_TOKEN_SECRET=<different 64-char random string>
 REFRESH_TOKEN_EXPIRY=10d
-
-CLOUDINARY_CLOUD_NAME=your-cloud-name
-CLOUDINARY_API_KEY=your-api-key
-CLOUDINARY_API_SECRET=your-api-secret
+CLOUDINARY_CLOUD_NAME=...
+CLOUDINARY_API_KEY=...
+CLOUDINARY_API_SECRET=...
+COOKIE_SECURE=false
 ```
 
-### Frontend
-Automatically proxies API calls to backend via Vite config.
+**Frontend** (`frontend/.env`)
+```
+VITE_API_URL=http://localhost:8000/api/v1
+```
 
-## 🚀 Deployment
+---
 
-### Backend
-- Deploy to Heroku, Railway, or Render
-- Set environment variables
-- Connect MongoDB Atlas
-- Configure Cloudinary
+## API Endpoints
 
-### Frontend
-- Build: `npm run build`
-- Deploy `dist/` folder to:
-  - Vercel (recommended)
-  - Netlify
-  - GitHub Pages
+Base URL: `/api/v1`
 
-## 📊 Project Stats
+| Resource | Endpoints |
+|---|---|
+| Users | register, login, logout, refresh-token, current-user, change-password, update-account, avatar, cover-image, c/:username, history |
+| Videos | CRUD, toggle-publish, views |
+| Likes | toggle video / comment / tweet, get liked videos |
+| Comments | CRUD per video |
+| Subscriptions | toggle, get subscribers, get subscribed channels |
+| Playlists | CRUD, add/remove video |
+| Tweets | CRUD |
+| Dashboard | stats, videos, subscriber analytics, video analytics, watch history |
 
-- **Total Files**: 50+
-- **Backend Endpoints**: 44+
-- **Frontend Components**: 15+
-- **Lines of Code**: ~10,000+
-- **Documentation Pages**: 7
+Full list: 40+ endpoints across 8 resource domains.
 
-## 🎯 Completed Features
+---
 
-### Phase 1-2: Foundation ✅
-- User authentication
-- Profile management
+## Features
 
-### Phase 3: Videos ✅
-- Upload, update, delete
-- Views counter
-- Search & filters
-
-### Phase 4: Engagement ✅
-- Likes
-- Comments
-- Subscriptions
-
-### Phase 5: Advanced ✅
-- Playlists
+- Register and login with avatar + cover image upload
+- Browse and search videos
+- Watch page with video player, likes, subscribe, comments
+- Channel profile with banner, tabs (Videos / Playlists / About)
+- Upload videos with thumbnail
+- Creator dashboard: total views, subscribers, likes, per-video stats
+- Playlists: create, add/remove videos
 - Watch history
-- Community posts
-
-### Phase 6: Analytics ✅
-- Channel stats
-- Subscriber analytics
-- Video performance
-
-### Frontend ✅
-- Beautiful dark theme
-- Responsive design
-- All core pages
-- Smooth animations
-
-## 🔮 Future Enhancements
-
-- [ ] Video upload page
-- [ ] Dashboard page
-- [ ] Channel page
-- [ ] Playlists page
-- [ ] Settings page
-- [ ] Video recommendations
-- [ ] Real-time notifications
-- [ ] Live streaming
-- [ ] Video transcoding
-- [ ] Advanced search
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch
-3. Commit changes
-4. Push to branch
-5. Open pull request
-
-## 📝 License
-
-ISC
-
-## 👨‍💻 Author
-
-**Mobeen Butt**
+- Liked videos feed
+- Subscriptions feed
+- Trending page
+- Mobile-responsive with bottom navigation
 
 ---
 
-## 🎓 Key Learning Outcomes
+## Deployment
 
-### Backend Development
-- RESTful API design
-- MongoDB aggregation
-- JWT authentication
-- File upload handling
-- Error handling patterns
+**Backend → Railway**
 
-### Frontend Development
-- React best practices
-- State management
-- Responsive design
-- Animation techniques
-- Component architecture
+Set these environment variables in Railway dashboard:
+```
+NODE_ENV=production
+COOKIE_SECURE=true
+CORS_ORIGIN=https://your-frontend.vercel.app
+# ... rest same as local but with production values
+```
+Railway auto-deploys from GitHub on push. Start command: `npm start`
 
-### Full-Stack Integration
-- API integration
-- Authentication flow
-- File upload flow
-- Real-time updates
+**Frontend → Vercel**
+
+Set in Vercel dashboard:
+```
+VITE_API_URL=https://your-backend.railway.app/api/v1
+```
+`vercel.json` in the frontend root handles React Router SPA rewrites so direct URL access works.
 
 ---
 
-**🌟 Star this project if you found it helpful!**
+## Production Notes
 
-**Built with ❤️ and lots of ☕**
+**Cross-origin authentication**  
+Frontend (Vercel) and backend (Railway) are on different domains. Modern browsers block third-party cookies in this configuration (Chrome Privacy Sandbox, Safari ITP). The app uses dual-mode authentication: tokens are set as httpOnly cookies AND returned in the response body. The frontend stores them in localStorage and sends them as `Authorization: Bearer` headers on every request. This works regardless of browser cookie settings.
 
-**Version**: 1.0.0
+**Media URLs**  
+All Cloudinary uploads are forced to HTTPS via `secure: true` in the config. The Axios response interceptor also normalises any legacy `http://` URLs in the database to `https://` automatically.
+
+**Rate limiting**  
+300 requests / 15 min on all API routes. 20 requests / 15 min on login and register specifically.
+
+---
+
+## Author
+
+Mobeen Butt

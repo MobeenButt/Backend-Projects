@@ -1,315 +1,206 @@
-# 🎬 VidTube Frontend
+# VideoVerse — Frontend
 
-A stunning, modern video platform frontend built with React, featuring a beautiful dark theme with neon accents.
+React frontend for a full-stack YouTube clone. Built with Vite, Tailwind CSS, and Zustand. Deployed on Vercel.
 
-## ✨ Features
-
-### 🎨 **World-Class UI/UX**
-- **Sleek Dark Theme** - Modern dark interface (#0A0A0F) with white text and neon accents
-- **Glassmorphism Effects** - Frosted glass cards with subtle blur
-- **Smooth Animations** - Floating elements, fade-ins, and slide-ups
-- **Neon Glow Effects** - Purple/blue neon shadows on interactive elements
-- **Gradient Accents** - Beautiful purple-to-indigo gradients
-- **Responsive Design** - Perfect on mobile, tablet, and desktop
-
-### 🚀 **Core Features**
-- **Video Browsing** - Grid layout with beautiful thumbnails
-- **Video Player** - Full-featured HTML5 video player
-- **Authentication** - Login and registration with validation
-- **Search** - Real-time video search
-- **Comments** - Comment on videos with like functionality
-- **Likes & Subscriptions** - Engage with content and channels
-- **User Profiles** - Channel pages with stats
-- **Responsive Navbar** - Search, upload, and user menu
-
-### 🛠️ **Technical Stack**
-- **React 18** - Latest React features
-- **React Router** - Client-side routing
-- **Zustand** - Simple state management
-- **Tailwind CSS** - Utility-first styling
-- **Framer Motion** - Smooth animations
-- **React Hot Toast** - Beautiful notifications
-- **Vite** - Lightning-fast build tool
-
-## 🎨 Design System
-
-### Color Palette
-```css
-Background: #0A0A0F (Rich dark blue-black)
-Cards: #13131A (Slightly lighter dark)
-Hover: #1A1A24 (Interactive states)
-Border: #2A2A35 (Subtle borders)
-Accent: #6366F1 (Vibrant purple-blue)
-
-Neon Colors:
-- Blue: #00F0FF (Cyan glow)
-- Purple: #B794F6 (Lavender)
-- Pink: #FF6B9D (Hot pink)
-- Green: #00FFA3 (Mint)
-```
-
-### Typography
-- **Font**: Inter (Google Fonts)
-- **Headings**: Bold, large sizes
-- **Body**: Regular weight
-- **Accents**: Semibold
-
-### Components
-- **Glass Cards** - Backdrop blur with border glow
-- **Buttons** - Gradient primary, ghost secondary
-- **Inputs** - Dark with focus glow
-- **Avatars** - Gradient fallbacks
-- **Modals** - Centered with backdrop
-
-## 📦 Installation
-
-```bash
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-## 🔧 Configuration
-
-### API Base URL
-Edit `src/utils/api.js`:
-```javascript
-const API_BASE_URL = 'http://localhost:8000/api/v1';
-```
-
-### Vite Proxy
-Already configured in `vite.config.js` to proxy `/api` to backend.
-
-## 📁 Project Structure
-
-```
-frontend/
-├── src/
-│   ├── components/
-│   │   ├── common/          # Reusable components
-│   │   │   ├── Avatar.jsx
-│   │   │   ├── Button.jsx
-│   │   │   ├── Card.jsx
-│   │   │   ├── Input.jsx
-│   │   │   ├── Loader.jsx
-│   │   │   └── Modal.jsx
-│   │   ├── layout/          # Layout components
-│   │   │   ├── Navbar.jsx
-│   │   │   └── Sidebar.jsx
-│   │   └── video/           # Video components
-│   │       ├── CommentSection.jsx
-│   │       ├── VideoCard.jsx
-│   │       └── VideoPlayer.jsx
-│   ├── pages/               # Page components
-│   │   ├── Home.jsx
-│   │   ├── Login.jsx
-│   │   ├── Register.jsx
-│   │   └── Watch.jsx
-│   ├── services/            # API services
-│   │   ├── auth.service.js
-│   │   ├── channel.service.js
-│   │   └── video.service.js
-│   ├── store/               # State management
-│   │   └── useAuthStore.js
-│   ├── utils/               # Utilities
-│   │   ├── api.js
-│   │   └── helpers.js
-│   ├── App.jsx              # Main app component
-│   ├── main.jsx             # Entry point
-│   └── index.css            # Global styles
-├── public/
-├── index.html
-├── package.json
-├── vite.config.js
-├── tailwind.config.js
-└── postcss.config.js
-```
-
-## 🎯 Key Components
-
-### **Button Component**
-```jsx
-<Button variant="primary" size="md" loading={false}>
-  Click Me
-</Button>
-```
-Variants: `primary`, `secondary`, `outline`, `ghost`, `danger`
-
-### **Input Component**
-```jsx
-<Input
-  label="Email"
-  type="email"
-  value={email}
-  onChange={(e) => setEmail(e.target.value)}
-  error={error}
-  icon={MailIcon}
-/>
-```
-
-### **VideoCard Component**
-```jsx
-<VideoCard video={videoData} />
-```
-Displays thumbnail, title, channel info, views, and upload time.
-
-### **Avatar Component**
-```jsx
-<Avatar
-  src={user.avatar}
-  alt={user.fullName}
-  size="md"
-  fallback={user.fullName}
-/>
-```
-Auto-generates gradient with initials if no image.
-
-## 🎨 Styling Guide
-
-### Custom Classes
-```css
-.glass - Glassmorphism effect
-.glass-hover - Glass with hover
-.btn-primary - Primary button
-.btn-secondary - Secondary button
-.input-field - Input field
-.card - Glass card
-.neon-text - Gradient text
-```
-
-### Animations
-```css
-animate-float - Floating effect
-animate-glow - Pulsing glow
-animate-slide-up - Slide up entrance
-animate-fade-in - Fade in entrance
-```
-
-### Gradients
-```css
-bg-gradient-primary - Purple-to-indigo
-bg-gradient-accent - Pink-to-red
-bg-gradient-dark - Dark gradient
-bg-gradient-glow - Radial glow
-```
-
-## 🚀 Features to Implement
-
-### Current Pages
-- ✅ Home (Video grid)
-- ✅ Login
-- ✅ Register
-- ✅ Watch (Video player)
-
-### Upcoming Pages
-- 🔄 Upload video
-- 🔄 User profile
-- 🔄 Channel page
-- 🔄 Dashboard
-- 🔄 Search results
-- 🔄 Playlists
-- 🔄 History
-- 🔄 Liked videos
-- 🔄 Subscriptions
-- 🔄 Settings
-
-## 💡 Development Tips
-
-### Hot Reload
-Vite provides instant hot module replacement. Save and see changes immediately.
-
-### Component Development
-Create components in `src/components/` and import where needed.
-
-### State Management
-Use Zustand stores for global state:
-```javascript
-import useAuthStore from './store/useAuthStore';
-const { user, login, logout } = useAuthStore();
-```
-
-### API Calls
-Use service files:
-```javascript
-import { videoService } from './services/video.service';
-const videos = await videoService.getAllVideos();
-```
-
-## 🎨 Customization
-
-### Change Theme Colors
-Edit `tailwind.config.js`:
-```javascript
-colors: {
-  dark: {
-    bg: '#0A0A0F',      // Your custom color
-    accent: '#6366F1',   // Your custom accent
-  }
-}
-```
-
-### Add Custom Animations
-Edit `tailwind.config.js` keyframes section.
-
-### Modify Fonts
-Edit `index.html` Google Fonts link and `tailwind.config.js` fontFamily.
-
-## 📱 Responsive Design
-
-- **Mobile** - Single column layout
-- **Tablet** - 2-column grid
-- **Desktop** - 3-4 column grid with sidebar
-- **Navbar** - Collapsible on mobile
-- **Sidebar** - Hidden on mobile, visible on desktop
-
-## 🔒 Security
-
-- JWT tokens stored in localStorage
-- HTTP-only cookies supported
-- CORS configured
-- Input validation
-- XSS protection
-
-## 🌟 Best Practices
-
-- **Component Reusability** - DRY principle
-- **Code Splitting** - React.lazy() for routes
-- **Performance** - React.memo for expensive renders
-- **Accessibility** - Semantic HTML and ARIA labels
-- **SEO** - Meta tags and proper headings
-
-## 🚀 Deployment
-
-```bash
-# Build for production
-npm run build
-
-# Deploy dist/ folder to:
-# - Vercel
-# - Netlify
-# - GitHub Pages
-# - Your server
-```
-
-## 🎓 Learning Resources
-
-- **React Docs**: https://react.dev
-- **Tailwind CSS**: https://tailwindcss.com
-- **Zustand**: https://github.com/pmndrs/zustand
-- **React Router**: https://reactrouter.com
-- **Framer Motion**: https://www.framer.com/motion/
+**Live:** https://vidtube-frontend-ochre.vercel.app
 
 ---
 
-**Built with ❤️ and lots of ☕**
+## Tech Stack
 
-**Version**: 1.0.0  
-**Author**: Mobeen Butt
+- **React 18** + Vite
+- **React Router DOM v6** — client-side routing
+- **Zustand** — global auth state
+- **Axios** — HTTP client with request/response interceptors
+- **Tailwind CSS** — utility-first styling
+- **Framer Motion** — animations
+- **React Hot Toast** — notifications
+- **React Icons**
+
+---
+
+## Setup
+
+```bash
+npm install
+
+# Create .env file
+echo "VITE_API_URL=http://localhost:8000/api/v1" > .env
+
+npm run dev        # http://localhost:5173
+npm run build      # production build → dist/
+npm run preview    # preview production build
+```
+
+---
+
+## Environment Variables
+
+```env
+# Development
+VITE_API_URL=http://localhost:8000/api/v1
+
+# Production (set in Vercel dashboard)
+VITE_API_URL=https://backend-projects-production-e244.up.railway.app/api/v1
+```
+
+---
+
+## Project Structure
+
+```
+src/
+├── App.jsx                 Router setup, auth restore on mount, layout
+├── main.jsx
+├── index.css               Tailwind directives, custom CSS classes
+│
+├── pages/
+│   ├── Home.jsx            Video feed with filter chips
+│   ├── Watch.jsx           Video player, likes, subscribe, comments
+│   ├── Upload.jsx          Drag-and-drop video upload with thumbnail
+│   ├── Channel.jsx         Channel profile: banner, avatar, tabs
+│   ├── Dashboard.jsx       Creator stats + video management
+│   ├── Search.jsx          Query-based results
+│   ├── Subscriptions.jsx   Feed from subscribed channels
+│   ├── Trending.jsx        Most-viewed videos
+│   ├── History.jsx         Watch history with clear option
+│   ├── Liked.jsx           Liked videos
+│   ├── Playlists.jsx       Playlist grid + create modal
+│   ├── PlaylistDetail.jsx  Playlist contents, remove videos
+│   ├── Login.jsx
+│   └── Register.jsx        With avatar + cover image upload
+│
+├── components/
+│   ├── layout/
+│   │   ├── Navbar.jsx      Search, upload icon, user menu, mobile search
+│   │   └── Sidebar.jsx     Desktop fixed sidebar + mobile drawer + bottom nav
+│   ├── video/
+│   │   ├── VideoCard.jsx   Thumbnail, title, channel, views, time
+│   │   ├── VideoGrid.jsx   Responsive grid with skeleton and empty states
+│   │   ├── VideoPlayer.jsx HTML5 video with loading indicator
+│   │   ├── CommentSection.jsx  Add / list / delete / like comments
+│   │   ├── LikeButton.jsx  Toggle with count
+│   │   └── SubscribeButton.jsx Toggle with count
+│   └── common/
+│       ├── AuthGuard.jsx   Redirects to /login if not authenticated
+│       ├── Avatar.jsx      Image with initials fallback
+│       ├── Button.jsx      primary / secondary / ghost / outlined variants
+│       ├── Input.jsx       Label + error display
+│       ├── Loader.jsx      Spinner
+│       ├── Modal.jsx       Centered overlay
+│       ├── SkeletonCard.jsx Loading placeholder
+│       ├── EmptyState.jsx  Icon + title + description + optional action
+│       ├── VideoPage.jsx   VideoGrid and PageHeader shared layout
+│       ├── Tooltip.jsx
+│       └── Dropdown.jsx
+│
+├── services/
+│   ├── api.js              Axios instance, interceptors, token store
+│   ├── auth.service.js     login, register, logout, getCurrentUser
+│   ├── video.service.js    CRUD, views, like, comments
+│   ├── channel.service.js  Profile, dashboard, history, analytics
+│   ├── comment.service.js
+│   ├── like.service.js
+│   ├── subscription.service.js
+│   ├── playlist.service.js
+│   ├── tweet.service.js
+│   └── dashboard.service.js
+│
+├── store/
+│   └── useAuthStore.js     Zustand store: login, register, logout, loadUser
+│
+├── hooks/
+│   ├── useDebounce.js
+│   └── useInfiniteScroll.js
+│
+└── utils/
+    ├── helpers.js          formatViews, formatDuration, formatTimeAgo, validateEmail, getInitials
+    └── formatters.js       toHttps, formatSubscribers, formatDate
+```
+
+---
+
+## Authentication
+
+The app uses dual-mode authentication to handle cross-origin deployments (Vercel frontend + Railway backend on different domains).
+
+Modern browsers block third-party cookies between different domains. The solution:
+- After login or register, the backend returns `accessToken` and `refreshToken` in the response body
+- The frontend stores these in `localStorage` via `tokenStore`
+- Every Axios request attaches `Authorization: Bearer <accessToken>` header
+- When a 401 is received, the interceptor sends the `refreshToken` in the request body to get a new token pair, then retries the original request
+
+httpOnly cookies are still set for browsers that support them, but the app never depends on them.
+
+**tokenStore API** (in `services/api.js`):
+```js
+tokenStore.setTokens(accessToken, refreshToken)  // called after login
+tokenStore.getAccess()                            // used by request interceptor
+tokenStore.clear()                                // called on logout
+```
+
+---
+
+## Key Patterns
+
+**All API calls go through service files** — never call axios directly in a component.
+```js
+import { videoService } from '../services/video.service';
+const response = await videoService.getAllVideos({ limit: 24, sortBy: 'views' });
+const videos = response.data?.docs || [];
+```
+
+**Axios response interceptor unwraps the ApiResponse wrapper** so `response.data` is the actual payload, not the `{ statusCode, data, message, success }` envelope.
+
+**All errors come back as `new Error(message)`** from the interceptor. Use `error.message` in catch blocks, not `error.response?.data?.message`.
+```js
+} catch (error) {
+  toast.error(error.message || 'Something went wrong');
+}
+```
+
+**`loadUser()` runs on every app mount** to validate the stored token with the server. It short-circuits immediately if no token exists, so unauthenticated visitors don't see any console errors.
+
+---
+
+## Responsive Breakpoints
+
+| Screen | Layout |
+|---|---|
+| Mobile `< 640px` | Single column, bottom navigation bar |
+| Tablet `640px–1024px` | 2–3 column grid, sidebar hidden |
+| Desktop `> 1024px` | 4 column grid, fixed sidebar (240px) |
+
+---
+
+## Design
+
+Dark theme matching YouTube's aesthetic.
+
+```
+Background:       #0f0f0f
+Surface:          #212121
+Hover:            #3f3f3f
+Border:           #3f3f3f
+Primary text:     #ffffff
+Secondary text:   #aaaaaa
+Accent / brand:   #ff0000
+```
+
+Custom Tailwind classes: `.card-surface`, `.btn`, `.btn-primary`, `.btn-outlined`, `.icon-btn`, `.chip`, `.chip-active`, `.input-field`, `.no-scrollbar`, `.avatar-gradient`
+
+---
+
+## Deployment (Vercel)
+
+`vercel.json` in the project root handles React Router SPA routing — all paths rewrite to `index.html` so direct URL access and page refresh work correctly.
+
+Set `VITE_API_URL` in Vercel dashboard → Project Settings → Environment Variables.
+
+Vercel auto-deploys from GitHub on push to main.
+
+---
+
+## Author
+
+Mobeen Butt
