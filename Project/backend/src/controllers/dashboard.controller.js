@@ -1,10 +1,11 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
-import { Video } from "../models/video.model.js";
-import { Subscription } from "../models/subscription.model.js";
-import { Like } from "../models/likes.model.js";
-import mongoose from "mongoose";
+import { asyncHandler }   from "../utils/asyncHandler.js";
+import { ApiError }        from "../utils/ApiError.js";
+import { ApiResponse }     from "../utils/ApiResponse.js";
+import { Video }           from "../models/video.model.js";
+import { User }            from "../models/user.model.js";
+import { Subscription }    from "../models/subscription.model.js";
+import { Like }            from "../models/likes.model.js";
+import mongoose            from "mongoose";
 
 // @desc    Get channel statistics
 // @route   GET /api/v1/dashboard/stats
@@ -284,7 +285,7 @@ const getVideoAnalytics = asyncHandler(async (req, res) => {
 const getWatchHistory = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  const watchHistory = await mongoose.model("User").aggregate([
+  const watchHistory = await User.aggregate([
     {
       $match: {
         _id: new mongoose.Types.ObjectId(userId),
@@ -344,7 +345,7 @@ const getWatchHistory = asyncHandler(async (req, res) => {
 const clearWatchHistory = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  await mongoose.model("User").findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     userId,
     {
       $set: { watchHistory: [] },

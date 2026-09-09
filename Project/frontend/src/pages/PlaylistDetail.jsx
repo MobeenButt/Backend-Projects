@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { playlistService } from '../services/playlist.service';
 import useAuthStore from '../store/useAuthStore';
 import Loader from '../components/common/Loader';
@@ -10,6 +10,7 @@ import toast from 'react-hot-toast';
 const PlaylistDetail = () => {
   const { playlistId } = useParams();
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const [playlist, setPlaylist] = useState(null);
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState(false);
@@ -26,7 +27,7 @@ const PlaylistDetail = () => {
       setPlaylist(response.data);
     } catch (error) {
       console.error('Failed to load playlist:', error);
-      toast.error(error.response?.data?.message || 'Failed to load playlist');
+      toast.error(error.message || 'Failed to load playlist');
     } finally {
       setLoading(false);
     }
@@ -39,7 +40,7 @@ const PlaylistDetail = () => {
       toast.success('Video removed from playlist');
       loadPlaylist();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to remove video');
+      toast.error(error.message || 'Failed to remove video');
     } finally {
       setRemoving(false);
     }
@@ -50,9 +51,9 @@ const PlaylistDetail = () => {
     try {
       await playlistService.deletePlaylist(playlistId);
       toast.success('Playlist deleted');
-      window.location.href = '/playlists';
+      navigate('/playlists');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to delete playlist');
+      toast.error(error.message || 'Failed to delete playlist');
     }
   };
 

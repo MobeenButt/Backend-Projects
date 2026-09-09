@@ -2,104 +2,95 @@ import { v2 as cloudinary } from "cloudinary";
 import fs from "fs";
 import path from "path";
 
-const configureCloudinary = () => {
-  if (process.env.CLOUDINARY_URL) {
-    cloudinary.config({ secure: true });
-    return;
-  }
+// Configure once on module load so every call uses the same instance.
+const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
+const apiKey    = process.env.CLOUDINARY_API_KEY?.trim();
+const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
 
-  const cloudName = process.env.CLOUDINARY_CLOUD_NAME?.trim();
-  const apiKey = process.env.CLOUDINARY_API_KEY?.trim();
-  const apiSecret = process.env.CLOUDINARY_API_SECRET?.trim();
-
-  if (!cloudName || !apiKey || !apiSecret) {
-    throw new Error(
-      "Cloudinary credentials missing. Set CLOUDINARY_URL or CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, and CLOUDINARY_API_SECRET in .env"
-    );
-  }
-
+if (!cloudName || !apiKey || !apiSecret) {
+  console.error(
+    "[cloudinary] Missing credentials. Set CLOUDINARY_CLOUD_NAME, " +
+    "CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET in environment variables."
+  );
+} else {
   cloudinary.config({
     cloud_name: cloudName,
-    api_key: apiKey,
+    api_key:    apiKey,
     api_secret: apiSecret,
-    secure: true,
+    secure:     true, // ALL generated URLs use https://
   });
-};
+}
 
+/**
+ * Upload a local file to Cloudinary and remove the temp copy regardless of
+ * outcome.  Always returns an object whose `.url` is an https:// string.
+ */
 const uploadOnCloudinary = async (localFilePath) => {
   if (!localFilePath) return null;
-
-  configureCloudinary();
 
   const absolutePath = path.resolve(localFilePath);
 
   if (!fs.existsSync(absolutePath)) {
-    throw new Error(`Local file not found: ${absolutePath}`);
+    throw new Error(`Temp file not found: ${absolutePath}`);
   }
 
-  console.log("Uploading file:", absolutePath);
-
   try {
-    const uploadOptions = { resource_type: "auto",secure: true };
+    const response = await cloudinary.uploader.upload(absolutePath, {
+      resource_type: "auto",
+      secure:        true, // double-enforce https in the returned URL
+    });
 
-    if (process.env.CLOUDINARY_UPLOAD_PRESET?.trim()) {
-      uploadOptions.upload_preset = process.env.CLOUDINARY_UPLOAD_PRESET.trim();
+    // Force https even if Cloudinary ever returns http (old free-tier behaviour)
+    if (response.url) {
+      response.url         = response.url.replace(/^http:\/\//i, "https://");
+      response.secure_url  = response.secure_url || response.url;
     }
 
-    const response = await cloudinary.uploader.upload(
-      absolutePath,
-      uploadOptions
-    );
-
-    console.log("Upload success:", response.url);
-    fs.unlinkSync(absolutePath);
     return response;
   } catch (error) {
-    console.log(
-      "Cloudinary error:",
-      error.http_code || "N/A",
-      error.message || error
-    );
-
-    if (fs.existsSync(absolutePath)) {
-      fs.unlinkSync(absolutePath);
-    }
-
     throw new Error(
       error.http_code
         ? `Cloudinary upload failed (${error.http_code}): ${error.message}`
         : `Cloudinary upload failed: ${error.message || error}`
     );
+  } finally {
+    // Always clean up the temp file
+    try {
+      if (fs.existsSync(absolutePath)) fs.unlinkSync(absolutePath);
+    } catch (_) {
+      // ignore cleanup errors
+    }
   }
 };
 
+/**
+ * Delete an asset from Cloudinary by its public URL.
+ * Silently returns null on failure so upload errors aren't masked.
+ */
 const deleteFromCloudinary = async (fileUrl) => {
+  if (!fileUrl) return null;
+
   try {
-    if (!fileUrl) return null;
-
-    configureCloudinary();
-
-    // Extract public_id from a Cloudinary URL.
-    // URLs follow the pattern: /<cloud>/image/upload/v<version>/<public_id>.<ext>
-    // We strip query params and find "/upload/" segment.
-    const url = fileUrl.split("?")[0];
+    const url   = fileUrl.split("?")[0];
     const match = url.match(/\/upload\/(?:v\d+\/)?(.+)$/);
-    if (!match) {
-      console.log("Cloudinary delete error: could not parse public_id from URL");
-      return null;
-    }
+    if (!match) return null;
 
-    let publicId = match[1];
-    // Remove file extension
-    publicId = publicId.replace(/\.[^.]+$/, "");
+    const publicId = match[1].replace(/\.[^.]+$/, "");
 
-    const response = await cloudinary.uploader.destroy(publicId, {
+    // Try image first; fall back to video for video assets
+    let result = await cloudinary.uploader.destroy(publicId, {
       resource_type: "image",
     });
 
-    return response;
+    if (result.result === "not found") {
+      result = await cloudinary.uploader.destroy(publicId, {
+        resource_type: "video",
+      });
+    }
+
+    return result;
   } catch (error) {
-    console.log("Cloudinary delete error:", error.message);
+    console.error("[cloudinary] deleteFromCloudinary error:", error.message);
     return null;
   }
 };

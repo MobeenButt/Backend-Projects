@@ -116,7 +116,7 @@ const Register = () => {
       toast.success('Account created successfully!');
       navigate('/');
     } catch (error) {
-      toast.error(error.response?.data?.message || error.message || 'Registration failed');
+      toast.error(error.message || 'Registration failed');
     }
   };
 

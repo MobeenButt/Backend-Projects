@@ -48,7 +48,7 @@ const Playlists = () => {
       setFormData({ name: '', description: '' });
       loadPlaylists();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create playlist');
+      toast.error(error.message || 'Failed to create playlist');
     } finally {
       setCreating(false);
     }

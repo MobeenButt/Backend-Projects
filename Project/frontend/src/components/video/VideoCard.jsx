@@ -49,7 +49,7 @@ const VideoCard = ({ video }) => {
           </Link>
 
           <div className="flex items-center text-xs text-youtube-text-secondary">
-            <span>{formatViews(video.views)} views</span>
+            <span>{formatViews(video.views)}</span>
             <span className="mx-1">•</span>
             <span>{formatTimeAgo(video.createdAt)}</span>
           </div>

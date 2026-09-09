@@ -26,7 +26,7 @@ const LikeButton = ({ videoId, initialLikesCount = 0, initialIsLiked = false, ty
       setLikesCount(prev => newIsLiked ? prev + 1 : prev - 1);
       
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update like');
+      toast.error(error.message || 'Failed to update like');
     } finally {
       setIsLoading(false);
     }

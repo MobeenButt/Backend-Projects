@@ -2,73 +2,114 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import useAuthStore from '../store/useAuthStore';
 import { videoService } from '../services/video.service';
-import { subscriptionService } from '../services/subscription.service';
+import { channelService } from '../services/channel.service';
 import { playlistService } from '../services/playlist.service';
+import { subscriptionService } from '../services/subscription.service';
 import Button from '../components/common/Button';
 import Avatar from '../components/common/Avatar';
 import Loader from '../components/common/Loader';
 import EmptyState from '../components/common/EmptyState';
+import VideoCard from '../components/video/VideoCard';
 import toast from 'react-hot-toast';
 import { formatViews, formatDuration, formatTimeAgo } from '../utils/helpers';
 
 const Channel = () => {
-  const { channelId } = useParams();
+  const { channelId } = useParams(); // This can be a userId or username
   const { user, isAuthenticated } = useAuthStore();
   const navigate = useNavigate();
+
   const [channel, setChannel] = useState(null);
   const [videos, setVideos] = useState([]);
   const [playlists, setPlaylists] = useState([]);
-  const [subscriberCount, setSubscriberCount] = useState(0);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [subLoading, setSubLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('videos');
 
-  const targetUserId = channelId || user?._id;
+  // If no channelId param, show the logged-in user's own channel
+  const isOwnChannelPage = !channelId;
 
   useEffect(() => {
-    if (targetUserId) loadChannelData();
-    else setLoading(false);
+    loadChannelData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [targetUserId]);
+  }, [channelId, user?._id]);
 
   const loadChannelData = async () => {
     setLoading(true);
     try {
-      // Fetch the channel's public videos to derive channel info + content
-      const videoResponse = await videoService.getAllVideos({
-        userId: targetUserId,
-        limit: 24,
-        sortBy: 'createdAt',
-        sortType: 'desc',
-      });
-      const channelVideos = videoResponse.data?.docs || [];
-      setVideos(channelVideos);
+      let channelData = null;
+      let targetUserId = null;
 
-      // Channel info from video owner (or logged-in user for own channel)
-      if (targetUserId === user?._id && user) {
-        setChannel(user);
-      } else if (channelVideos.length > 0) {
-        setChannel(channelVideos[0].owner);
+      if (isOwnChannelPage) {
+        // Own channel: use the logged-in user object directly
+        if (!user) { setLoading(false); return; }
+        channelData = user;
+        targetUserId = user._id;
+      } else {
+        // Try fetching by userId first (links from VideoCard use _id)
+        // Fall back to username lookup if the param looks like a username string
+        try {
+          const res = await videoService.getAllVideos({ userId: channelId, limit: 1 });
+          const ownerFromVideo = res.data?.docs?.[0]?.owner;
+          if (ownerFromVideo) {
+            // We have a userId-based param — get full profile via username if possible
+            channelData = ownerFromVideo;
+            targetUserId = channelId;
+          }
+        } catch {
+          // silently fall through
+        }
+
+        // If we didn't get channel data yet, try as username
+        if (!channelData) {
+          try {
+            const profileRes = await channelService.getUserProfile(channelId);
+            channelData = profileRes.data;
+            targetUserId = profileRes.data?._id;
+            setIsSubscribed(profileRes.data?.isSubscribed || false);
+          } catch {
+            setChannel(null);
+            setLoading(false);
+            return;
+          }
+        }
       }
 
-      // Subscriber count
-      try {
-        const subResponse = await subscriptionService.getChannelSubscribers(targetUserId);
-        setSubscriberCount((subResponse.data || []).length);
-      } catch {
-        setSubscriberCount(0);
+      setChannel(channelData);
+
+      if (!targetUserId) { setLoading(false); return; }
+
+      // Load videos and playlists in parallel
+      const [videoRes, playlistRes] = await Promise.allSettled([
+        videoService.getAllVideos({
+          userId: targetUserId,
+          limit: 24,
+          sortBy: 'createdAt',
+          sortType: 'desc',
+        }),
+        playlistService.getUserPlaylists(targetUserId),
+      ]);
+
+      if (videoRes.status === 'fulfilled') {
+        setVideos(videoRes.value.data?.docs || []);
+      }
+      if (playlistRes.status === 'fulfilled') {
+        setPlaylists(playlistRes.value.data || []);
       }
 
-      // Playlists for the channel user
-      try {
-        const plResponse = await playlistService.getUserPlaylists(targetUserId);
-        setPlaylists(plResponse.data || []);
-      } catch {
-        setPlaylists([]);
+      // Check subscription status if looking at another channel
+      if (isAuthenticated && targetUserId !== user?._id) {
+        try {
+          const subRes = await subscriptionService.getChannelSubscribers(targetUserId);
+          const subs = subRes.data || [];
+          setIsSubscribed(subs.some((s) => s.subscriber?._id === user._id));
+        } catch {
+          // non-critical
+        }
       }
     } catch (error) {
       console.error('Failed to load channel:', error);
+      toast.error('Failed to load channel');
     } finally {
       setLoading(false);
     }
@@ -76,18 +117,24 @@ const Channel = () => {
 
   const handleSubscribe = async () => {
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: `/channel/${channelId}` } });
+      navigate('/login', { state: { from: location.pathname } });
       return;
     }
+    if (!channel?._id) return;
+
     setSubLoading(true);
     try {
-      await subscriptionService.toggleSubscription(targetUserId);
-      const isNowSubscribed = !isSubscribed;
-      setIsSubscribed(isNowSubscribed);
-      setSubscriberCount((c) => c + (isNowSubscribed ? 1 : -1));
-      toast.success(isNowSubscribed ? 'Subscribed!' : 'Unsubscribed');
+      await subscriptionService.toggleSubscription(channel._id);
+      const nowSubscribed = !isSubscribed;
+      setIsSubscribed(nowSubscribed);
+      // Update local subscriber count on channel object
+      setChannel((c) => ({
+        ...c,
+        subscribersCount: Math.max(0, (c.subscribersCount || 0) + (nowSubscribed ? 1 : -1)),
+      }));
+      toast.success(nowSubscribed ? 'Subscribed!' : 'Unsubscribed');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update subscription');
+      toast.error(error.message || 'Failed to update subscription');
     } finally {
       setSubLoading(false);
     }
@@ -106,22 +153,32 @@ const Channel = () => {
       <div className="min-h-screen flex items-center justify-center">
         <EmptyState
           title="Channel not found"
-          description="This channel may not exist or has no public videos"
+          description="This channel doesn't exist or has no public content"
         />
       </div>
     );
   }
 
   const isOwnChannel = channel._id === user?._id;
-
   const tabs = [
-    { id: 'videos', label: 'Videos', count: videos.length },
+    { id: 'videos',    label: 'Videos',    count: videos.length },
     { id: 'playlists', label: 'Playlists', count: playlists.length },
-    { id: 'about', label: 'About' },
+    { id: 'about',     label: 'About' },
   ];
 
   return (
     <div className="min-h-screen animate-fade-in">
+      {/* Banner */}
+      {channel.coverImage && (
+        <div className="w-full h-32 sm:h-48 overflow-hidden">
+          <img
+            src={channel.coverImage}
+            alt="Channel cover"
+            className="w-full h-full object-cover"
+          />
+        </div>
+      )}
+
       {/* Channel Header */}
       <div className="bg-youtube-surface/50 border-b border-youtube-border">
         <div className="max-w-7xl mx-auto p-4 sm:p-6">
@@ -139,7 +196,9 @@ const Channel = () => {
               </h1>
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-youtube-text-secondary mt-1.5">
                 <span>@{channel.username}</span>
-                <span>{formatViews(subscriberCount)} subscribers</span>
+                <span>
+                  {formatViews(channel.subscribersCount || 0)} subscribers
+                </span>
                 <span>{videos.length} videos</span>
               </div>
             </div>
@@ -182,7 +241,7 @@ const Channel = () => {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Tab Content */}
       <div className="max-w-7xl mx-auto p-4 sm:p-6">
         {activeTab === 'videos' && (
           videos.length === 0 ? (
@@ -193,12 +252,12 @@ const Channel = () => {
                 </svg>
               }
               title="No public videos yet"
-              description={isOwnChannel ? 'Upload a video to get started' : 'Check back later'}
+              description={isOwnChannel ? 'Upload your first video to get started' : 'Check back later'}
             />
           ) : (
             <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
               {videos.map((video) => (
-                <VideoCardInner key={video._id} video={video} />
+                <ChannelVideoCard key={video._id} video={video} />
               ))}
             </div>
           )
@@ -206,17 +265,19 @@ const Channel = () => {
 
         {activeTab === 'playlists' && (
           playlists.length === 0 ? (
-            <EmptyState
-              title="No playlists"
-              description="No playlists available for this channel"
-            />
+            <EmptyState title="No playlists" description="No public playlists for this channel" />
           ) : (
             <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {playlists.map((p) => (
-                <div key={p._id} className="card-surface overflow-hidden">
-                  <div className="aspect-video bg-youtube-hover flex items-center justify-center">
+                <Link key={p._id} to={`/playlists/${p._id}`} className="card-surface overflow-hidden group block">
+                  <div className="aspect-video bg-youtube-hover flex items-center justify-center overflow-hidden">
                     {p.firstVideoThumbnail ? (
-                      <img src={p.firstVideoThumbnail} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
+                      <img
+                        src={p.firstVideoThumbnail}
+                        alt={p.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
                     ) : (
                       <svg className="w-10 h-10 text-youtube-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
@@ -227,7 +288,7 @@ const Channel = () => {
                     <h3 className="font-medium text-youtube-text truncate">{p.name}</h3>
                     <p className="text-sm text-youtube-text-secondary">{p.totalVideos || 0} videos</p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )
@@ -235,13 +296,21 @@ const Channel = () => {
 
         {activeTab === 'about' && (
           <div className="max-w-2xl">
-            <div className="card-surface p-6">
-              <h3 className="text-lg font-medium text-youtube-text mb-4">About</h3>
-              <div className="space-y-3 text-sm text-youtube-text-secondary">
-                <p>Channel: {channel.fullName}</p>
-                <p>{formatViews(subscriberCount)} subscribers</p>
-                <p>Joined: {new Date(channel.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}</p>
-              </div>
+            <div className="card-surface p-6 space-y-3 text-sm text-youtube-text-secondary">
+              <h3 className="text-lg font-medium text-youtube-text">About</h3>
+              <p>Channel: {channel.fullName}</p>
+              {channel.subscribersCount !== undefined && (
+                <p>{formatViews(channel.subscribersCount)} subscribers</p>
+              )}
+              {channel.createdAt && (
+                <p>
+                  Joined{' '}
+                  {new Date(channel.createdAt).toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'long',
+                  })}
+                </p>
+              )}
             </div>
           </div>
         )}
@@ -250,33 +319,31 @@ const Channel = () => {
   );
 };
 
-// Local video card for the channel grid
-const VideoCardInner = ({ video }) => {
-  return (
-    <Link to={`/watch/${video._id}`} className="block group">
-      <div className="relative w-full aspect-video bg-youtube-surface rounded-xl overflow-hidden mb-3">
-        <img
-          src={video.thumbnail}
-          alt={video.title}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-        />
-        {video.duration && (
-          <span className="absolute bottom-1.5 right-1.5 bg-black/80 px-1.5 py-0.5 rounded text-xs font-medium text-white">
-            {formatDuration(video.duration)}
-          </span>
-        )}
-      </div>
-      <h3 className="text-sm font-medium text-youtube-text line-clamp-2 leading-snug group-hover:text-youtube-text-secondary transition-colors">
-        {video.title}
-      </h3>
-      <div className="flex items-center gap-2 text-xs text-youtube-text-secondary mt-1">
-        <span>{formatViews(video.views)} views</span>
-        <span>•</span>
-        <span>{formatTimeAgo(video.createdAt)}</span>
-      </div>
-    </Link>
-  );
-};
+// Minimal video card reused inside the channel grid
+const ChannelVideoCard = ({ video }) => (
+  <Link to={`/watch/${video._id}`} className="block group">
+    <div className="relative w-full aspect-video bg-youtube-surface rounded-xl overflow-hidden mb-3">
+      <img
+        src={video.thumbnail}
+        alt={video.title}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+        loading="lazy"
+      />
+      {video.duration && (
+        <span className="absolute bottom-1.5 right-1.5 bg-black/80 px-1.5 py-0.5 rounded text-xs font-medium text-white">
+          {formatDuration(video.duration)}
+        </span>
+      )}
+    </div>
+    <h3 className="text-sm font-medium text-youtube-text line-clamp-2 leading-snug group-hover:text-youtube-text-secondary transition-colors">
+      {video.title}
+    </h3>
+    <div className="flex items-center gap-2 text-xs text-youtube-text-secondary mt-1">
+      <span>{formatViews(video.views)} views</span>
+      <span>•</span>
+      <span>{formatTimeAgo(video.createdAt)}</span>
+    </div>
+  </Link>
+);
 
 export default Channel;

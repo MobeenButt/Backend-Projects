@@ -28,7 +28,7 @@ const SubscribeButton = ({ channelId, initialIsSubscribed = false, initialSubscr
       
       toast.success(newIsSubscribed ? 'Subscribed!' : 'Unsubscribed');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update subscription');
+      toast.error(error.message || 'Failed to update subscription');
     } finally {
       setIsLoading(false);
     }

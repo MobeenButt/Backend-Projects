@@ -66,7 +66,7 @@ const Dashboard = () => {
       setVideos(videosRes.data?.docs || []);
     } catch (error) {
       console.error('Failed to load dashboard:', error);
-      toast.error('Failed to load dashboard');
+      toast.error(error.message || 'Failed to load dashboard');
     } finally {
       setLoading(false);
     }

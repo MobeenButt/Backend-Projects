@@ -76,7 +76,7 @@ const Watch = () => {
       }));
       toast.success(newLikedState ? 'Added to liked videos' : 'Removed from liked videos');
     } catch (error) {
-      toast.error('Failed to like video');
+      toast.error(error.message || 'Failed to like video');
     }
   };
 
@@ -91,7 +91,7 @@ const Watch = () => {
       setIsSubscribed(newSubState);
       toast.success(newSubState ? 'Subscribed!' : 'Unsubscribed');
     } catch (error) {
-      toast.error('Failed to subscribe');
+      toast.error(error.message || 'Failed to subscribe');
     }
   };
 

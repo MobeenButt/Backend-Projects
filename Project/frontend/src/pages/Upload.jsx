@@ -77,6 +77,10 @@ const Upload = () => {
       toast.error('Please enter a title');
       return;
     }
+    if (!formData.thumbnail) {
+      toast.error('Please add a thumbnail image');
+      return;
+    }
 
     setLoading(true);
     const uploadData = new FormData();
@@ -92,7 +96,7 @@ const Upload = () => {
       toast.success('Video uploaded successfully!');
       navigate('/');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to upload video');
+      toast.error(error.message || 'Failed to upload video');
     } finally {
       setLoading(false);
     }
@@ -155,7 +159,7 @@ const Upload = () => {
           {/* Thumbnail */}
           <div className="card-surface p-6">
             <label className="block text-sm font-medium text-youtube-text mb-3">
-              Thumbnail
+              Thumbnail <span className="text-youtube-red">*</span>
             </label>
             <div className="flex items-center gap-4 flex-wrap">
               {formData.thumbnail && (
@@ -238,7 +242,7 @@ const Upload = () => {
               type="submit"
               variant="primary"
               loading={loading}
-              disabled={!formData.videoFile || !formData.title.trim()}
+              disabled={!formData.videoFile || !formData.title.trim() || !formData.thumbnail}
             >
               {loading ? 'Uploading...' : 'Upload Video'}
             </Button>

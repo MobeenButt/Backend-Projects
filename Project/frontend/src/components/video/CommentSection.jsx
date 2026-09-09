@@ -44,7 +44,7 @@ const CommentSection = ({ videoId }) => {
       setComments((prev) => [response.data, ...prev]);
       setNewComment('');
     } catch (error) {
-      toast.error('Failed to post comment');
+      toast.error(error.message || 'Failed to post comment');
     } finally {
       setSubmitting(false);
     }
@@ -59,7 +59,7 @@ const CommentSection = ({ videoId }) => {
       await likeService.toggleCommentLike(commentId);
       loadComments();
     } catch (error) {
-      toast.error('Failed to like comment');
+      toast.error(error.message || 'Failed to like comment');
     }
   };
 

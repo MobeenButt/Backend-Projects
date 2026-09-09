@@ -26,9 +26,10 @@ function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isAuthenticated, loadUser } = useAuthStore();
 
-  // Restore/validate session from cookies on first load
+  // Always re-validate the session with the server on first load.
+  // This sets loading=true while in flight, which AuthGuard uses to show
+  // a spinner instead of flashing a redirect to /login.
   useEffect(() => {
-    if (isAuthenticated) return;
     loadUser();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
