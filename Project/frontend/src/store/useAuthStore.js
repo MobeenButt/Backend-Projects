@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { authService } from '../services/auth.service';
+import { tokenStore } from '../services/api';
 
-// Safely read user from localStorage without crashing on corrupt data
 const getInitialUser = () => {
   try {
     const raw = localStorage.getItem('user');
@@ -14,65 +14,66 @@ const getInitialUser = () => {
 
 const useAuthStore = create((set) => ({
   user:            getInitialUser(),
-  // Start in loading=true so AuthGuard never flashes the login redirect
-  // before loadUser() has had a chance to validate the session cookie.
-  isAuthenticated: !!getInitialUser(),
+  isAuthenticated: !!getInitialUser() && !!tokenStore.getAccess(),
   loading:         false,
   error:           null,
 
+  // ── Login ───────────────────────────────────────────────────────────────
   login: async (credentials) => {
     set({ loading: true, error: null });
     try {
       const response = await authService.login(credentials);
-      const user = response?.data ?? null;
-      if (user) localStorage.setItem('user', JSON.stringify(user));
+      const user = response?.data?.user ?? response?.data ?? null;
       set({ user, isAuthenticated: !!user, loading: false });
       return response;
     } catch (error) {
-      // api.js interceptor converts all errors to `new Error(message)`
-      const message = error.message || 'Login failed';
-      set({ error: message, loading: false });
+      set({ error: error.message || 'Login failed', loading: false });
       throw error;
     }
   },
 
+  // ── Register ────────────────────────────────────────────────────────────
   register: async (userData) => {
     set({ loading: true, error: null });
     try {
       const response = await authService.register(userData);
-      const user = response?.data ?? null;
-      if (user) localStorage.setItem('user', JSON.stringify(user));
+      const user = response?.data?.user ?? response?.data ?? null;
       set({ user, isAuthenticated: !!user, loading: false });
       return response;
     } catch (error) {
-      const message = error.message || 'Registration failed';
-      set({ error: message, loading: false });
+      set({ error: error.message || 'Registration failed', loading: false });
       throw error;
     }
   },
 
+  // ── Logout ──────────────────────────────────────────────────────────────
   logout: async () => {
     set({ loading: true });
     try {
       await authService.logout();
     } catch {
-      // Even if the API call fails, clear local state so the UI isn't stuck
+      // Always clear local state even if server call fails
     } finally {
-      localStorage.removeItem('user');
-      localStorage.removeItem('accessToken');
+      tokenStore.clear();
       set({ user: null, isAuthenticated: false, loading: false, error: null });
     }
   },
 
-  // Called on app mount to validate the session cookie with the server.
-  // Sets loading=true while in-flight so AuthGuard shows a spinner instead
-  // of immediately redirecting to /login.
+  // ── Load user on app mount ───────────────────────────────────────────────
+  // Only validates the token with the server if we have BOTH a local user
+  // record AND an access token. Unauthenticated visitors are ignored entirely
+  // — no server call, no console errors, no redirect flash.
   loadUser: async () => {
-    // No local record means the user was never logged in on this device.
-    // Skip the server call entirely — no cookie exists to validate.
-    const hasLocal = !!localStorage.getItem('user');
-    if (!hasLocal) {
-      set({ loading: false });
+    const hasLocal  = !!localStorage.getItem('user');
+    const hasToken  = !!tokenStore.getAccess();
+
+    if (!hasLocal || !hasToken) {
+      // No session to validate
+      if (hasLocal && !hasToken) {
+        // Stale local record with no token — clean up
+        localStorage.removeItem('user');
+      }
+      set({ user: null, isAuthenticated: false, loading: false });
       return;
     }
 
@@ -80,26 +81,18 @@ const useAuthStore = create((set) => ({
     try {
       const response = await authService.getCurrentUser();
       const user = response?.data ?? null;
-      if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
-      } else {
-        localStorage.removeItem('user');
-      }
       set({ user, isAuthenticated: !!user, loading: false });
     } catch {
-      // Server rejected the cookie (expired / rotated secret / logged out elsewhere)
-      localStorage.removeItem('user');
-      localStorage.removeItem('accessToken');
+      // Token was rejected (expired, rotated secret, etc.)
+      tokenStore.clear();
       set({ user: null, isAuthenticated: false, loading: false });
     }
   },
 
+  // ── Update user in store + localStorage ─────────────────────────────────
   updateUser: (user) => {
-    if (user) {
-      localStorage.setItem('user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('user');
-    }
+    if (user) localStorage.setItem('user', JSON.stringify(user));
+    else      localStorage.removeItem('user');
     set({ user, isAuthenticated: !!user });
   },
 

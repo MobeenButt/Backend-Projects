@@ -1,28 +1,41 @@
-import api, { buildFormData } from './api';
+import api, { buildFormData, tokenStore } from './api';
 
-// The backend returns ApiResponse { statusCode, data, message, success }
-// After the interceptor, `response` is that ApiResponse object, so the
-// actual payload lives at `response.data`.
-
-const persistSession = (user) => {
-  if (user) {
-    localStorage.setItem('user', JSON.stringify(user));
-  }
+// Persist user profile to localStorage so loadUser() can skip the server
+// call for unauthenticated visitors.
+const persistUser = (user) => {
+  if (user) localStorage.setItem('user', JSON.stringify(user));
+  else      localStorage.removeItem('user');
 };
 
 export const authService = {
+
   register: async (userData) => {
-    // Build multipart payload (includes avatar file + refreshToken array as JSON)
     const formData =
       userData instanceof FormData ? userData : buildFormData(userData);
+
     const response = await api.post('/users/register', formData);
-    persistSession(response.data);
+
+    // Backend now returns { user, accessToken, refreshToken } in data
+    const { user, accessToken, refreshToken } = response.data ?? response;
+
+    // Save tokens so every subsequent request includes Authorization header
+    tokenStore.setTokens(accessToken, refreshToken);
+    persistUser(user);
+
+    // Normalise response.data so useAuthStore can read .data.user
+    response.data = { user };
     return response;
   },
 
   login: async (credentials) => {
     const response = await api.post('/users/login', credentials);
-    persistSession(response.data);
+
+    const { user, accessToken, refreshToken } = response.data ?? response;
+
+    tokenStore.setTokens(accessToken, refreshToken);
+    persistUser(user);
+
+    response.data = { user };
     return response;
   },
 
@@ -30,21 +43,23 @@ export const authService = {
     try {
       await api.post('/users/logout');
     } finally {
-      localStorage.removeItem('user');
-      localStorage.removeItem('accessToken');
+      tokenStore.clear();
     }
   },
 
   getCurrentUser: async () => {
     const response = await api.get('/users/current-user');
-    persistSession(response.data);
-    return response;
+    const user = response.data ?? response;
+    persistUser(user);
+    // Wrap in { data: user } so useAuthStore reads response.data correctly
+    return { data: user };
   },
 
   updateProfile: async (data) => {
     const response = await api.patch('/users/update-account', data);
-    persistSession(response.data);
-    return response;
+    const user = response.data ?? response;
+    persistUser(user);
+    return { data: user };
   },
 
   changePassword: async (data) => {

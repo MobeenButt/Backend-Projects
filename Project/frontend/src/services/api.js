@@ -3,156 +3,193 @@ import axios from 'axios';
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
-// Create axios instance
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true, // CRITICAL for cross-origin cookies
-  headers: {
-    'Content-Type': 'application/json',
+// ── Token store (in-memory + localStorage) ────────────────────────────────────
+// We use a module-level variable as the primary source of truth so the token
+// is available synchronously in the request interceptor without a store lookup.
+// localStorage is used only for persistence across page refreshes.
+
+let _accessToken  = localStorage.getItem('accessToken')  || null;
+let _refreshToken = localStorage.getItem('refreshToken') || null;
+
+export const tokenStore = {
+  getAccess:    ()  => _accessToken,
+  getRefresh:   ()  => _refreshToken,
+  setTokens: (access, refresh) => {
+    _accessToken  = access  ?? _accessToken;
+    _refreshToken = refresh ?? _refreshToken;
+    if (access)  localStorage.setItem('accessToken',  access);
+    if (refresh) localStorage.setItem('refreshToken', refresh);
   },
+  clear: () => {
+    _accessToken  = null;
+    _refreshToken = null;
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+  },
+};
+
+// ── Axios instance ────────────────────────────────────────────────────────────
+
+const api = axios.create({
+  baseURL:         API_BASE_URL,
+  withCredentials: true, // still send cookies when browser allows them
+  headers: { 'Content-Type': 'application/json' },
 });
 
-// Log API calls in development
-if (import.meta.env.DEV) {
-  console.log('🔧 API Base URL:', API_BASE_URL);
-}
+// ── Request interceptor ───────────────────────────────────────────────────────
 
-// Request interceptor
 api.interceptors.request.use(
   (config) => {
-    // Log requests in development
-    if (import.meta.env.DEV) {
-      console.log('🚀 API Request:', {
-        method: config.method?.toUpperCase(),
-        url: config.url,
-        data: config.data,
-        params: config.params,
-      });
+    // Attach access token as Authorization header on every request.
+    // This works regardless of whether the browser allows 3rd-party cookies.
+    const token = tokenStore.getAccess();
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
     }
 
-    // For file uploads, let the browser set the Content-Type with boundary
+    // For file uploads let the browser set Content-Type with the boundary
     if (config.data instanceof FormData) {
       delete config.headers['Content-Type'];
     }
-    
+
+    if (import.meta.env.DEV) {
+      console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`);
+    }
+
     return config;
   },
-  (error) => {
-    console.error('❌ Request Error:', error);
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Convert any http:// URL to https:// (Cloudinary may return http for old records)
-const normalizeToHttps = (value) => {
-  if (typeof value === 'string') {
-    return value.replace(/^http:\/\//i, 'https://');
-  }
-  if (Array.isArray(value)) {
-    return value.map(normalizeToHttps);
-  }
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+// Convert http:// media URLs to https:// (legacy Cloudinary records)
+const toHttps = (value) => {
+  if (typeof value === 'string')        return value.replace(/^http:\/\//i, 'https://');
+  if (Array.isArray(value))             return value.map(toHttps);
   if (value && typeof value === 'object') {
     const out = {};
-    for (const key of Object.keys(value)) {
-      out[key] = normalizeToHttps(value[key]);
-    }
+    for (const k of Object.keys(value)) out[k] = toHttps(value[k]);
     return out;
   }
   return value;
 };
 
-// Response interceptor: handle token refresh and errors
+const buildError = (axiosError) =>
+  new Error(
+    axiosError.response?.data?.message ||
+    axiosError.message ||
+    'An error occurred'
+  );
+
+// ── Response interceptor ──────────────────────────────────────────────────────
+
+let isRefreshing = false;
+let failedQueue  = [];   // requests that arrived while refresh was in flight
+
+const processQueue = (err) => {
+  failedQueue.forEach((p) => (err ? p.reject(err) : p.resolve()));
+  failedQueue = [];
+};
+
 api.interceptors.response.use(
   (response) => {
-    // Log successful responses in development
     if (import.meta.env.DEV) {
-      console.log('✅ API Response:', {
-        url: response.config.url,
-        status: response.status,
-        data: response.data,
-      });
+      console.log(`✅ ${response.config.url} → ${response.status}`);
     }
-
-    // Backend wraps responses in ApiResponse { statusCode, data, message, success }
-    // Force HTTPS on every URL field (thumbnail, avatar, videoFile, coverImage...)
-    return normalizeToHttps(response.data);
+    // Unwrap ApiResponse { statusCode, data, message, success }
+    // and normalise all http:// URLs to https://
+    return toHttps(response.data);
   },
+
   async (error) => {
     const originalRequest = error.config;
 
-    // Log errors in development
     if (import.meta.env.DEV) {
-      console.error('❌ API Error:', {
-        url: originalRequest?.url,
-        status: error.response?.status,
-        message: error.response?.data?.message || error.message,
-        data: error.response?.data,
-      });
+      console.error(
+        `❌ ${originalRequest?.url} → ${error.response?.status}`,
+        error.response?.data?.message || error.message
+      );
     }
 
-    // Handle network errors
     if (!error.response) {
-      console.error('🌐 Network Error: Unable to reach server');
-      return Promise.reject(new Error('Network error. Please check your connection.'));
+      return Promise.reject(new Error('Network error — server unreachable'));
     }
 
-    // Handle 401 Unauthorized - attempt token refresh
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      // Don't retry for auth endpoints
-      const isAuthEndpoint = ['/users/login', '/users/register', '/users/refresh-token']
-        .some((path) => originalRequest.url?.includes(path));
+    const status = error.response.status;
 
-      if (isAuthEndpoint) {
-        return Promise.reject(error);
-      }
+    // ── 401: try to refresh the access token, then retry ──────────────────
+    if (status === 401 && !originalRequest._retry) {
 
-      // Check if user session exists
-      if (!localStorage.getItem('user')) {
-        return Promise.reject(error);
+      // Never attempt refresh for auth endpoints
+      const isAuthEndpoint = [
+        '/users/login',
+        '/users/register',
+        '/users/refresh-token',
+      ].some((p) => originalRequest.url?.includes(p));
+
+      if (isAuthEndpoint) return Promise.reject(buildError(error));
+
+      // If we have no refresh token at all, don't bother
+      const rt = tokenStore.getRefresh();
+      if (!rt) return Promise.reject(buildError(error));
+
+      // Queue concurrent 401s while a refresh is already in flight
+      if (isRefreshing) {
+        return new Promise((resolve, reject) =>
+          failedQueue.push({ resolve, reject })
+        )
+          .then(() => api(originalRequest))
+          .catch((e) => Promise.reject(e));
       }
 
       originalRequest._retry = true;
+      isRefreshing = true;
 
       try {
-        // Attempt token refresh
+        // Send refreshToken both as cookie (if available) AND in body
         const refreshResponse = await axios.post(
           `${API_BASE_URL}/users/refresh-token`,
-          {},
+          { refreshToken: rt },           // body fallback for cookie-blocked browsers
           { withCredentials: true }
         );
 
-        if (refreshResponse.data?.data?.accessToken) {
-          // Retry original request
-          return api(originalRequest);
+        // Backend returns { data: { accessToken, refreshToken } }
+        const newAccess  = refreshResponse.data?.data?.accessToken;
+        const newRefresh = refreshResponse.data?.data?.refreshToken;
+
+        if (newAccess) {
+          tokenStore.setTokens(newAccess, newRefresh);
+          originalRequest.headers['Authorization'] = `Bearer ${newAccess}`;
         }
+
+        processQueue(null);
+        return api(originalRequest);
       } catch (refreshError) {
-        // Refresh failed - clear local state
-        localStorage.removeItem('user');
-        localStorage.removeItem('accessToken');
-        console.error('🔒 Session expired. Please login again.');
+        processQueue(refreshError);
+        tokenStore.clear();
+        return Promise.reject(buildError(error));
+      } finally {
+        isRefreshing = false;
       }
     }
 
-    // Return structured error
-    const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
-    return Promise.reject(new Error(errorMessage));
+    return Promise.reject(buildError(error));
   }
 );
 
-// Helper to build FormData from plain object
+// ── FormData helper ───────────────────────────────────────────────────────────
+
 export const buildFormData = (data) => {
-  const formData = new FormData();
+  const fd = new FormData();
   Object.entries(data).forEach(([key, value]) => {
     if (value == null) return;
-    if (value instanceof File) {
-      formData.append(key, value);
-    } else if (Array.isArray(value)) {
-      formData.append(key, JSON.stringify(value));
-    } else {
-      formData.append(key, value);
-    }
+    if (value instanceof File)     fd.append(key, value);
+    else if (Array.isArray(value)) fd.append(key, JSON.stringify(value));
+    else                           fd.append(key, value);
   });
-  return formData;
+  return fd;
 };
 
 export default api;

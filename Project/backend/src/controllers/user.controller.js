@@ -104,14 +104,18 @@ const registerUser = asyncHandler(async (req, res) => {
   const createdUser = await User.findById(user._id).select("-password -refreshToken");
   if (!createdUser) throw new ApiError(500, "User registration failed");
 
-  // Auto-login after registration
+  // Auto-login after registration — same dual-mode as login
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
 
   return res
     .status(201)
     .cookie("refreshToken", refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS)
     .cookie("accessToken",  accessToken,  ACCESS_TOKEN_COOKIE_OPTIONS)
-    .json(new ApiResponse(201, createdUser, "User registered successfully"));
+    .json(new ApiResponse(201, {
+      user: createdUser,
+      accessToken,
+      refreshToken,
+    }, "User registered successfully"));
 });
 
 // ─────────────────────────────────────────────
@@ -143,11 +147,18 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
 
+  // Dual-mode auth: tokens in cookies (when browser allows) AND in response
+  // body (fallback for browsers blocking cross-origin cookies, e.g. Chrome
+  // with "Block third-party cookies" enabled, Safari ITP, Firefox ETP).
   return res
     .status(200)
     .cookie("refreshToken", refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS)
     .cookie("accessToken",  accessToken,  ACCESS_TOKEN_COOKIE_OPTIONS)
-    .json(new ApiResponse(200, loggedInUser, "User logged in successfully"));
+    .json(new ApiResponse(200, {
+      user: loggedInUser,
+      accessToken,
+      refreshToken,
+    }, "User logged in successfully"));
 });
 
 // ─────────────────────────────────────────────
